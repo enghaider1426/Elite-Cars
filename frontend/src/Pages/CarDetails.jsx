@@ -25,12 +25,15 @@ function CarDetails({ cars, onDeleteCar, onView }) {
   const [deleteLoading, setDeleteLoading] = useState(false)
 
   // =========================================================
-  // ترجمة الوصف الديناميكي عند عدم وجود descriptionEn
+  // ترجمة الوصف الديناميكي
   // =========================================================
 
   const [translatedDescription, setTranslatedDescription] = useState('')
 
-  // حماية من البيانات الناقصة
+  // =========================================================
+  // حماية البيانات
+  // =========================================================
+
   const safeCars = Array.isArray(cars) ? cars : []
 
   const car = safeCars.find(
@@ -45,14 +48,305 @@ function CarDetails({ cars, onDeleteCar, onView }) {
     ? isFavorite(carId)
     : false
 
-  // تتبع المشاهدة الأخيرة
+  const isEnglish = language === 'en'
+
+  // =========================================================
+  // التحقق من وجود حروف عربية
+  // =========================================================
+
+  const containsArabic = (value) => {
+    if (
+      value === null ||
+      value === undefined
+    ) {
+      return false
+    }
+
+    return /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
+      String(value)
+    )
+  }
+
+  // =========================================================
+  // تتبع مشاهدة السيارة
+  // =========================================================
+
   useEffect(() => {
     if (carId && onView) {
       onView(carId)
     }
   }, [carId, onView])
 
+  // =========================================================
+  // ترجمة الوصف الديناميكي عبر Backend / OpenAI
+  // =========================================================
+
+  useEffect(() => {
+    let cancelled = false
+
+    if (!car) {
+      setTranslatedDescription('')
+      return () => {
+        cancelled = true
+      }
+    }
+
+    const sourceDescription =
+      car.description !== null &&
+      car.description !== undefined
+        ? String(car.description).trim()
+        : ''
+
+    const existingEnglishDescription =
+      car.descriptionEn !== null &&
+      car.descriptionEn !== undefined
+        ? String(car.descriptionEn).trim()
+        : ''
+
+    // ---------------------------------------------------------
+    // العربية:
+    // عرض النص الأصلي بدون أي تعديل
+    // ---------------------------------------------------------
+
+    if (!isEnglish) {
+      setTranslatedDescription(sourceDescription)
+
+      return () => {
+        cancelled = true
+      }
+    }
+
+    // ---------------------------------------------------------
+    // الإنجليزية + توجد ترجمة محفوظة مسبقاً
+    // ---------------------------------------------------------
+
+    if (
+      existingEnglishDescription &&
+      !containsArabic(existingEnglishDescription)
+    ) {
+      setTranslatedDescription(
+        existingEnglishDescription
+      )
+
+      return () => {
+        cancelled = true
+      }
+    }
+
+    // ---------------------------------------------------------
+    // لا يوجد وصف
+    // ---------------------------------------------------------
+
+    if (!sourceDescription) {
+      setTranslatedDescription(
+        'No description available.'
+      )
+
+      return () => {
+        cancelled = true
+      }
+    }
+
+    // ---------------------------------------------------------
+    // إذا كان النص أصلاً إنجليزي بالكامل
+    // ---------------------------------------------------------
+
+    if (!containsArabic(sourceDescription)) {
+      setTranslatedDescription(sourceDescription)
+
+      return () => {
+        cancelled = true
+      }
+    }
+
+    // ---------------------------------------------------------
+    // حاول أولاً استخدام القاموس المحلي
+    // ---------------------------------------------------------
+
+    const localTranslation = t(sourceDescription)
+
+    if (
+      localTranslation &&
+      localTranslation !== sourceDescription &&
+      !containsArabic(localTranslation)
+    ) {
+      setTranslatedDescription(
+        String(localTranslation).trim()
+      )
+
+      return () => {
+        cancelled = true
+      }
+    }
+
+    // ---------------------------------------------------------
+    // ترجمة حقيقية عبر Backend / OpenAI
+    // ---------------------------------------------------------
+
+    const API_BASE_URL = (
+      import.meta.env.VITE_API_URL ||
+      'http://localhost:5000'
+    )
+      .replace(/\/+$/, '')
+      .replace(/\/api$/, '')
+
+    const translateDescription = async () => {
+      try {
+        setTranslatedDescription('Translating...')
+
+        const response = await fetch(
+          `${API_BASE_URL}/api/translation/batch`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              values: [sourceDescription]
+            })
+          }
+        )
+
+        const data = await response
+          .json()
+          .catch(() => ({}))
+
+        if (!response.ok) {
+          throw new Error(
+            data?.message ||
+            data?.error ||
+            `Translation request failed (${response.status})`
+          )
+        }
+
+        // =====================================================
+        // دعم أكثر من شكل محتمل لرد API
+        // =====================================================
+
+        let translated = ''
+
+        // الشكل الأساسي:
+        // { translations: { "النص": "English translation" } }
+
+        if (
+          data?.translations &&
+          !Array.isArray(data.translations) &&
+          typeof data.translations === 'object'
+        ) {
+          translated =
+            data.translations[sourceDescription] ||
+            ''
+        }
+
+        // شكل بديل:
+        // { translations: [{ source, translation }] }
+
+        if (
+          !translated &&
+          Array.isArray(data?.translations)
+        ) {
+          const matched = data.translations.find(
+            item =>
+              item?.source === sourceDescription ||
+              item?.original === sourceDescription ||
+              item?.input === sourceDescription
+          )
+
+          translated =
+            matched?.translation ||
+            matched?.translated ||
+            matched?.output ||
+            ''
+        }
+
+        // أشكال احتياطية إضافية
+        if (!translated) {
+          translated =
+            data?.translation ||
+            data?.translated ||
+            data?.result ||
+            ''
+        }
+
+        translated =
+          typeof translated === 'string'
+            ? translated.trim()
+            : ''
+
+        // =====================================================
+        // لا نقبل الترجمة إذا بقي فيها عربي
+        // =====================================================
+
+        if (
+          !cancelled &&
+          translated &&
+          !containsArabic(translated)
+        ) {
+          setTranslatedDescription(
+            translated
+          )
+
+          return
+        }
+
+        // =====================================================
+        // إذا رجع API نتيجة عربية أو فارغة
+        // لا نرجع النص العربي بشكل صامت
+        // =====================================================
+
+        if (!cancelled) {
+          const fallback =
+            localTranslation &&
+            localTranslation !== sourceDescription &&
+            !containsArabic(localTranslation)
+              ? localTranslation
+              : 'Translation unavailable.'
+
+          setTranslatedDescription(
+            fallback
+          )
+        }
+
+      } catch (error) {
+        console.error(
+          'Dynamic description translation failed:',
+          error?.message || error
+        )
+
+        if (!cancelled) {
+          const fallback =
+            localTranslation &&
+            localTranslation !== sourceDescription &&
+            !containsArabic(localTranslation)
+              ? localTranslation
+              : 'Translation unavailable.'
+
+          setTranslatedDescription(
+            fallback
+          )
+        }
+      }
+    }
+
+    void translateDescription()
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    car?._id,
+    car?.id,
+    car?.description,
+    car?.descriptionEn,
+    isEnglish,
+    t
+  ])
+
+  // =========================================================
   // إذا لم يتم العثور على السيارة
+  // =========================================================
+
   if (!car) {
     return <Navigate to="/inventory" replace />
   }
@@ -60,8 +354,6 @@ function CarDetails({ cars, onDeleteCar, onView }) {
   // =========================================================
   // أدوات حماية البيانات والترجمة
   // =========================================================
-
-  const isEnglish = language === 'en'
 
   const safeText = (value, fallback = '—') => {
     if (
@@ -132,158 +424,9 @@ function CarDetails({ cars, onDeleteCar, onView }) {
   const description = translateCarValue(
     car.description,
     car.descriptionEn,
-    isEnglish
-      ? 'No description available.'
-      : 'لا يوجد وصف متاح.',
+    'No description available.',
     'لا يوجد وصف متاح.'
   )
-
-  // =========================================================
-  // ترجمة الوصف الديناميكي عبر Backend / OpenAI
-  // =========================================================
-
-  useEffect(() => {
-    let cancelled = false
-
-    const sourceDescription =
-      car?.description !== null &&
-      car?.description !== undefined
-        ? String(car.description).trim()
-        : ''
-
-    const existingEnglishDescription =
-      car?.descriptionEn !== null &&
-      car?.descriptionEn !== undefined
-        ? String(car.descriptionEn).trim()
-        : ''
-
-    // العربية: نعرض الوصف الأصلي كما هو
-    if (!isEnglish) {
-      setTranslatedDescription(sourceDescription)
-      return () => {
-        cancelled = true
-      }
-    }
-
-    // الإنجليزية + يوجد وصف إنجليزي محفوظ
-    if (existingEnglishDescription) {
-      setTranslatedDescription(existingEnglishDescription)
-      return () => {
-        cancelled = true
-      }
-    }
-
-    // لا يوجد وصف
-    if (!sourceDescription) {
-      setTranslatedDescription(
-        'No description available.'
-      )
-      return () => {
-        cancelled = true
-      }
-    }
-
-    // أولاً استخدم الترجمة الموجودة في القاموس إن وجدت
-    const localTranslation =
-      t(sourceDescription)
-
-    if (
-      localTranslation &&
-      localTranslation !== sourceDescription &&
-      !/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
-        localTranslation
-      )
-    ) {
-      setTranslatedDescription(localTranslation)
-      return () => {
-        cancelled = true
-      }
-    }
-
-    // إذا لم توجد ترجمة محلية، استخدم Backend / OpenAI
-    const API_BASE_URL = (
-      import.meta.env.VITE_API_URL ||
-      'http://localhost:5000'
-    )
-      .replace(/\/+$/, '')
-      .replace(/\/api$/, '')
-
-    const translateDescription = async () => {
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/api/translation/batch`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-              values: [sourceDescription]
-            })
-          }
-        )
-
-        if (!response.ok) {
-          throw new Error(
-            `Description translation failed: ${response.status}`
-          )
-        }
-
-        const data = await response
-          .json()
-          .catch(() => ({}))
-
-        const translated =
-          data?.translations?.[sourceDescription]
-
-        if (
-          !cancelled &&
-          typeof translated === 'string' &&
-          translated.trim() &&
-          !/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
-            translated
-          )
-        ) {
-          setTranslatedDescription(
-            translated.trim()
-          )
-          return
-        }
-
-        if (!cancelled) {
-          setTranslatedDescription(
-            description
-          )
-        }
-      } catch (error) {
-        console.warn(
-          'Dynamic description translation unavailable:',
-          error?.message || error
-        )
-
-        if (!cancelled) {
-          setTranslatedDescription(
-            description
-          )
-        }
-      }
-    }
-
-    void translateDescription()
-
-    return () => {
-      cancelled = true
-    }
-  }, [
-    car?._id,
-    car?.id,
-    car?.description,
-    car?.descriptionEn,
-    isEnglish,
-    t,
-    description
-  ])
 
   // =========================================================
   // المميزات
@@ -318,7 +461,7 @@ function CarDetails({ cars, onDeleteCar, onView }) {
       )
 
   // =========================================================
-  // المواصفات مع حماية البيانات + ترجمة تلقائية عند غياب En
+  // المواصفات
   // =========================================================
 
   const bodyType = translateCarValue(
@@ -350,7 +493,7 @@ function CarDetails({ cars, onDeleteCar, onView }) {
   )
 
   // =========================================================
-  // تنسيق السعر
+  // السعر
   // =========================================================
 
   const numericPrice = Number(car.price)
@@ -399,7 +542,7 @@ function CarDetails({ cars, onDeleteCar, onView }) {
   }
 
   // =========================================================
-  // إضافة / إزالة السيارة من المفضلة
+  // المفضلة
   // =========================================================
 
   const handleFavorite = async () => {
@@ -433,13 +576,16 @@ function CarDetails({ cars, onDeleteCar, onView }) {
       console.error('Favorite error:', error)
 
       alert(
-        t(error?.message || 'حدث خطأ أثناء تحديث المفضلة')
+        t(
+          error?.message ||
+          'حدث خطأ أثناء تحديث المفضلة'
+        )
       )
     }
   }
 
   // =========================================================
-  // حذف السيارة - فقط للمسؤولين
+  // حذف السيارة
   // =========================================================
 
   const handleDelete = async () => {
@@ -505,7 +651,7 @@ function CarDetails({ cars, onDeleteCar, onView }) {
   }
 
   // =========================================================
-  // شارة الحالة
+  // الحالة
   // =========================================================
 
   const statusConfig = {
@@ -828,7 +974,10 @@ function CarDetails({ cars, onDeleteCar, onView }) {
                   {t('الوصف')}
                 </h3>
 
-                <p className="description-text">
+                <p
+                  className="description-text"
+                  data-no-auto-translate
+                >
                   {isEnglish
                     ? (
                         translatedDescription ||
