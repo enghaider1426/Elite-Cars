@@ -12,34 +12,70 @@ const rateLimit = require('express-rate-limit');
 const router = express.Router();
 
 const OPENAI_URL = 'https://api.openai.com/v1/responses';
-const OPENAI_MODEL = process.env.OPENAI_TRANSLATION_MODEL || 'gpt-5.6-luna';
+const OPENAI_MODEL =
+  process.env.OPENAI_TRANSLATION_MODEL || 'gpt-5.6-luna';
 
+/*
+ * This endpoint is used by both:
+ * - LanguageContext
+ * - Dynamic car descriptions
+ *
+ * 30 requests/minute was too restrictive because several UI
+ * translation requests can happen during one page load.
+ */
 const translationLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 30,
+  max: 120,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
     success: false,
-    message: 'عدد كبير جداً من طلبات الترجمة - يرجى المحاولة لاحقاً',
+    message:
+      'عدد كبير جداً من طلبات الترجمة - يرجى المحاولة لاحقاً',
   },
 });
 
 function containsArabic(value) {
-  return /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(value);
+  return /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
+    String(value || '')
+  );
 }
 
 function extractOutputText(result) {
-  if (typeof result?.output_text === 'string' && result.output_text.trim()) {
+  if (
+    typeof result?.output_text === 'string' &&
+    result.output_text.trim()
+  ) {
     return result.output_text.trim();
   }
 
-  return (result?.output || [])
-    .flatMap((item) => Array.isArray(item?.content) ? item.content : [])
-    .map((content) => typeof content?.text === 'string' ? content.text : '')
+  const output = Array.isArray(result?.output)
+    ? result.output
+    : [];
+
+  const text = output
+    .flatMap((item) =>
+      Array.isArray(item?.content)
+        ? item.content
+        : []
+    )
+    .map((content) => {
+      if (typeof content?.text === 'string') {
+        return content.text;
+      }
+
+      if (
+        typeof content?.text?.value === 'string'
+      ) {
+        return content.text.value;
+      }
+
+      return '';
+    })
     .filter(Boolean)
-    .join('')
-    .trim();
+    .join('');
+
+  return text.trim();
 }
 
 function stripJsonFence(text) {
@@ -51,127 +87,348 @@ function stripJsonFence(text) {
     .trim();
 }
 
-router.post('/batch', translationLimiter, async (req, res) => {
-  try {
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(503).json({
-        success: false,
-        message: 'OpenAI translation is not configured',
-      });
+/*
+ * Normalizes different possible OpenAI JSON response shapes.
+ */
+function normalizeTranslations(parsed) {
+  const result = {};
+
+  if (!parsed || typeof parsed !== 'object') {
+    return result;
+  }
+
+  const rawTranslations =
+    parsed.translations ||
+    parsed.translation ||
+    parsed.result;
+
+  /*
+   * Shape:
+   * {
+   *   "translations": {
+   *      "Arabic text": "English text"
+   *   }
+   * }
+   */
+  if (
+    rawTranslations &&
+    typeof rawTranslations === 'object' &&
+    !Array.isArray(rawTranslations)
+  ) {
+    for (const [source, translation] of Object.entries(
+      rawTranslations
+    )) {
+      if (typeof translation === 'string') {
+        result[source] = translation.trim();
+      }
     }
 
-    const values = Array.isArray(req.body?.values)
-      ? req.body.values
-          .filter((value) => typeof value === 'string')
-          .map((value) => value.trim())
-          .filter(Boolean)
-      : [];
+    return result;
+  }
 
-    const uniqueValues = [...new Set(values)];
+  /*
+   * Shape:
+   * {
+   *   "translations": [
+   *      {
+   *        "source": "...",
+   *        "translation": "..."
+   *      }
+   *   ]
+   * }
+   */
+  if (Array.isArray(rawTranslations)) {
+    for (const item of rawTranslations) {
+      if (!item || typeof item !== 'object') {
+        continue;
+      }
 
-    if (!uniqueValues.length) {
-      return res.json({ success: true, translations: {} });
+      const source =
+        item.source ||
+        item.original ||
+        item.input;
+
+      const translation =
+        item.translation ||
+        item.translated ||
+        item.output;
+
+      if (
+        typeof source === 'string' &&
+        typeof translation === 'string'
+      ) {
+        result[source.trim()] =
+          translation.trim();
+      }
     }
+  }
 
-    if (uniqueValues.length > 40) {
-      return res.status(400).json({
-        success: false,
-        message: 'Too many translation values in one request',
-      });
-    }
+  return result;
+}
 
-    if (uniqueValues.some((value) => value.length > 500)) {
-      return res.status(400).json({
-        success: false,
-        message: 'A translation value is too long',
-      });
-    }
+router.post(
+  '/batch',
+  translationLimiter,
+  async (req, res) => {
+    try {
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(503).json({
+          success: false,
+          message:
+            'OpenAI translation is not configured',
+        });
+      }
 
-    const arabicValues = uniqueValues.filter(containsArabic);
+      const values = Array.isArray(
+        req.body?.values
+      )
+        ? req.body.values
+            .filter(
+              (value) =>
+                typeof value === 'string'
+            )
+            .map((value) => value.trim())
+            .filter(Boolean)
+        : [];
 
-    if (!arabicValues.length) {
-      return res.json({ success: true, translations: {} });
-    }
+      const uniqueValues = [
+        ...new Set(values),
+      ];
 
-    const prompt = `Translate every supplied Arabic UI string into natural, professional English.
+      if (!uniqueValues.length) {
+        return res.json({
+          success: true,
+          translations: {},
+        });
+      }
 
-Rules:
+      if (uniqueValues.length > 40) {
+        return res.status(400).json({
+          success: false,
+          message:
+            'Too many translation values in one request',
+        });
+      }
+
+      if (
+        uniqueValues.some(
+          (value) => value.length > 500
+        )
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            'A translation value is too long',
+        });
+      }
+
+      const arabicValues =
+        uniqueValues.filter(containsArabic);
+
+      if (!arabicValues.length) {
+        return res.json({
+          success: true,
+          translations: {},
+        });
+      }
+
+      const prompt = `
+Translate every supplied Arabic string into natural, professional English.
+
+IMPORTANT:
 - Return JSON only.
+- The JSON must contain a top-level "translations" object.
+- Use each original input string as the exact JSON key.
+- The value must be its English translation.
 - Return exactly one translation for every supplied string.
 - Preserve numbers, punctuation, URLs, product/model names, brand names, and placeholders.
-- Do not explain the translations.
+- Do not explain anything.
 - Do not transliterate Arabic when a natural English meaning exists.
 - Do not add information.
-- Do not leave Arabic characters in the translated values.
+- Do not leave Arabic characters in translated values.
 
 Input strings:
-${JSON.stringify(arabicValues, null, 2)}`;
+${JSON.stringify(
+  arabicValues,
+  null,
+  2
+)}
+`.trim();
 
-    const response = await fetch(OPENAI_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: OPENAI_MODEL,
-        input: [
-          {
-            role: 'user',
-            content: [{ type: 'input_text', text: prompt }],
+      const response = await fetch(
+        OPENAI_URL,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type':
+              'application/json',
+            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
           },
-        ],
-        text: { format: { type: 'json_object' } },
-      }),
-    });
+          body: JSON.stringify({
+            model: OPENAI_MODEL,
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      return res.status(response.status === 429 ? 429 : 502).json({
+            input: [
+              {
+                role: 'user',
+                content: [
+                  {
+                    type: 'input_text',
+                    text: prompt,
+                  },
+                ],
+              },
+            ],
+
+            text: {
+              format: {
+                type: 'json_object',
+              },
+            },
+          }),
+        }
+      );
+
+      const responseText =
+        await response.text();
+
+      if (!response.ok) {
+        console.error(
+          'OpenAI translation request failed:',
+          {
+            status: response.status,
+            body:
+              process.env.NODE_ENV ===
+              'development'
+                ? responseText
+                : undefined,
+          }
+        );
+
+        return res
+          .status(
+            response.status === 429
+              ? 429
+              : 502
+          )
+          .json({
+            success: false,
+            message:
+              'OpenAI translation request failed',
+          });
+      }
+
+      let result;
+
+      try {
+        result = JSON.parse(
+          responseText
+        );
+      } catch (error) {
+        console.error(
+          'OpenAI translation response JSON parse failed:',
+          error.message
+        );
+
+        return res.status(502).json({
+          success: false,
+          message:
+            'Invalid OpenAI translation response',
+        });
+      }
+
+      const outputText =
+        extractOutputText(result);
+
+      if (!outputText) {
+        console.error(
+          'OpenAI translation returned empty output'
+        );
+
+        return res.status(502).json({
+          success: false,
+          message:
+            'OpenAI returned an empty translation',
+        });
+      }
+
+      let parsed;
+
+      try {
+        parsed = JSON.parse(
+          stripJsonFence(outputText)
+        );
+      } catch (error) {
+        console.error(
+          'Translation output is not valid JSON:',
+          error.message
+        );
+
+        return res.status(502).json({
+          success: false,
+          message:
+            'Invalid translation format',
+        });
+      }
+
+      const translations =
+        normalizeTranslations(parsed);
+
+      const safeTranslations = {};
+
+      for (const source of arabicValues) {
+        const translation =
+          translations[source];
+
+        if (
+          typeof translation === 'string' &&
+          translation.trim() &&
+          !containsArabic(
+            translation
+          )
+        ) {
+          safeTranslations[source] =
+            translation.trim();
+        }
+      }
+
+      /*
+       * If OpenAI returned something but failed to map
+       * the original string, log only safe diagnostic data.
+       * Never log API keys or sensitive values.
+       */
+      if (
+        Object.keys(safeTranslations)
+          .length !== arabicValues.length
+      ) {
+        console.warn(
+          'Some translation values could not be mapped:',
+          {
+            requested: arabicValues.length,
+            translated:
+              Object.keys(
+                safeTranslations
+              ).length,
+          }
+        );
+      }
+
+      return res.json({
+        success: true,
+        translations: safeTranslations,
+      });
+    } catch (error) {
+      console.error(
+        'UI translation error:',
+        error?.message || error
+      );
+
+      return res.status(502).json({
         success: false,
-        message: 'OpenAI translation request failed',
-        ...(process.env.NODE_ENV === 'development' ? { detail: errorText } : {}),
+        message:
+          'Unable to translate UI text right now',
       });
     }
-
-    const result = await response.json();
-    const parsed = JSON.parse(stripJsonFence(extractOutputText(result)));
-    const rawTranslations = parsed?.translations;
-    const translations = {};
-
-    if (Array.isArray(rawTranslations)) {
-      for (const item of rawTranslations) {
-        if (item && typeof item.source === 'string' && typeof item.translation === 'string') {
-          translations[item.source] = item.translation.trim();
-        }
-      }
-    } else if (rawTranslations && typeof rawTranslations === 'object') {
-      Object.entries(rawTranslations).forEach(([source, translation]) => {
-        if (typeof translation === 'string') {
-          translations[source] = translation.trim();
-        }
-      });
-    }
-
-    const safeTranslations = {};
-    for (const source of arabicValues) {
-      const translation = translations[source];
-      if (typeof translation === 'string' && translation && !containsArabic(translation)) {
-        safeTranslations[source] = translation;
-      }
-    }
-
-    return res.json({
-      success: true,
-      translations: safeTranslations,
-    });
-  } catch (error) {
-    console.error('UI translation error:', error.message);
-    return res.status(502).json({
-      success: false,
-      message: 'Unable to translate UI text right now',
-    });
   }
-});
+);
 
 module.exports = router;
