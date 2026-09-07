@@ -2,10 +2,16 @@ const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
 const mongoose = require('mongoose');
+const nodemailer = require('nodemailer');
+
 const User = require('../models/User');
 const Car = require('../models/Car');
+
 const { protect, admin } = require('../middleware/auth');
-const { asyncHandler, ErrorResponse } = require('../middleware/errorHandler');
+const {
+  asyncHandler,
+  ErrorResponse,
+} = require('../middleware/errorHandler');
 
 const authCookieOptions = () => ({
   httpOnly: true,
@@ -34,57 +40,58 @@ const AZ_PHONE_REGEX = /^\+?994\d{9}$/;
 
 /*
  * =========================================================
- * Resend Email Service
+ * Gmail SMTP Email Service
  * =========================================================
  *
- * يستخدم Resend عبر HTTPS بدلاً من SMTP.
- * هذا مناسب لـ Render Free لأننا لا نحتاج منافذ SMTP.
+ * يستخدم Gmail SMTP لإرسال رسائل التحقق واستعادة كلمة المرور.
+ * لا يحتاج إلى شراء دومين.
  */
+
 const sendEmail = async ({
   to,
   subject,
   text,
   html,
 }) => {
-  if (!process.env.RESEND_API_KEY) {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
     throw new Error(
-      'RESEND_API_KEY غير موجود في متغيرات البيئة'
+      'SMTP_USER أو SMTP_PASS غير موجود في متغيرات البيئة'
     );
   }
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: Number(process.env.SMTP_PORT) || 465,
+    secure: Number(process.env.SMTP_PORT) === 465,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 20000,
+  });
 
   const from =
-    process.env.RESEND_FROM_EMAIL ||
-    'Elite Cars <onboarding@resend.dev>';
+    process.env.SMTP_FROM ||
+    `Elite Cars <${process.env.SMTP_USER}>`;
 
-  const response = await fetch(
-    'https://api.resend.com/emails',
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from,
-        to: [to],
-        subject,
-        text,
-        html,
-      }),
-    }
-  );
+  const info = await transporter.sendMail({
+    from,
+    to,
+    subject,
+    text,
+    html,
+  });
 
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw new Error(
-      data?.message ||
-        data?.error?.message ||
-        `Resend API error (${response.status})`
+  if (process.env.NODE_ENV === 'development') {
+    console.log(
+      'Email sent successfully:',
+      info.messageId
     );
   }
 
-  return data;
+  return info;
 };
 
 router.post(
@@ -97,11 +104,17 @@ router.post(
     }
 
     if (!email || typeof email !== 'string') {
-      throw new ErrorResponse('البريد الإلكتروني مطلوب', 400);
+      throw new ErrorResponse(
+        'البريد الإلكتروني مطلوب',
+        400
+      );
     }
 
     if (!password || typeof password !== 'string') {
-      throw new ErrorResponse('كلمة المرور مطلوبة', 400);
+      throw new ErrorResponse(
+        'كلمة المرور مطلوبة',
+        400
+      );
     }
 
     if (password.length < 6) {
@@ -171,14 +184,12 @@ router.post(
       await sendEmail({
         to: user.email,
         subject: 'تأكيد البريد الإلكتروني - Elite Cars',
-
         text:
           `مرحباً ${user.name || ''}\n\n` +
           `شكراً لتسجيلك في Elite Cars.\n\n` +
           `اضغط على الرابط التالي لتأكيد بريدك الإلكتروني:\n\n` +
           `${verificationUrl}\n\n` +
           `هذا الرابط صالح لفترة محدودة.`,
-
         html: `
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -195,7 +206,6 @@ router.post(
   font-family:Arial,Helvetica,sans-serif;
   color:#f5f5f5;
 ">
-
   <table
     width="100%"
     cellpadding="0"
@@ -270,7 +280,6 @@ router.post(
               align="center"
               style="padding:42px 35px 35px;"
             >
-
               <div style="
                 width:72px;
                 height:72px;
@@ -390,7 +399,6 @@ router.post(
               ">
                 هذا الرابط صالح لفترة محدودة.
               </p>
-
             </td>
           </tr>
 
@@ -436,7 +444,6 @@ router.post(
       </td>
     </tr>
   </table>
-
 </body>
 </html>
 `,
@@ -685,7 +692,6 @@ router.post(
   font-family:Arial,Helvetica,sans-serif;
   color:#f5f5f5;
 ">
-
   <table
     width="100%"
     cellpadding="0"
@@ -760,7 +766,6 @@ router.post(
               align="center"
               style="padding:42px 35px 35px;"
             >
-
               <div style="
                 width:72px;
                 height:72px;
@@ -896,7 +901,6 @@ router.post(
               ">
                 إذا لم تطلب إعادة تعيين كلمة المرور، يمكنك تجاهل هذا البريد.
               </p>
-
             </td>
           </tr>
 
@@ -942,7 +946,6 @@ router.post(
       </td>
     </tr>
   </table>
-
 </body>
 </html>
 `,
@@ -1316,7 +1319,7 @@ router.put(
 
 /*
  * =========================================================
- * حذف مستخدم - إضافة جديدة
+ * حذف مستخدم
  * =========================================================
  *
  * DELETE /api/auth/users/:id
