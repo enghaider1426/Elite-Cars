@@ -43,8 +43,8 @@ const AZ_PHONE_REGEX = /^\+?994\d{9}$/;
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: Number(process.env.SMTP_PORT) || 587,
-  secure: Number(process.env.SMTP_PORT) === 465,
+  port: 465,
+  secure: true,
 
   connectionTimeout: 15000,
   greetingTimeout: 15000,
