@@ -1,12 +1,14 @@
 /* ===================================
    تنسيقات صفحة تفاصيل السيارة
    =================================== */
+
 .car-details-page {
   min-height: 100vh;
   padding-top: 80px;
 }
 
 /* Header */
+
 .details-header {
   padding: 40px 0 30px;
   background: var(--gradient-dark);
@@ -58,6 +60,7 @@
 }
 
 /* المحتوى */
+
 .details-content {
   padding: 50px 0 80px;
 }
@@ -70,6 +73,7 @@
 }
 
 /* قسم الصورة */
+
 .details-image-section {
   display: flex;
   flex-direction: column;
@@ -137,6 +141,7 @@
 }
 
 /* شارة الحالة */
+
 .status-badge {
   display: inline-block;
   padding: 6px 16px;
@@ -164,6 +169,7 @@
 }
 
 /* بطاقة السعر */
+
 .details-price-card {
   padding: 30px;
   text-align: center;
@@ -208,6 +214,7 @@
 }
 
 /* قسم المعلومات */
+
 .details-info-section {
   display: flex;
   flex-direction: column;
@@ -224,6 +231,7 @@
 }
 
 /* المواصفات */
+
 .specs-card {
   padding: 30px;
 }
@@ -258,12 +266,14 @@
   border-radius: var(--radius-sm);
   color: var(--primary-gold);
   font-size: 1rem;
+  flex-shrink: 0;
 }
 
 .spec-detail-info {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  min-width: 0;
 }
 
 .spec-detail-label {
@@ -275,9 +285,11 @@
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
+  overflow-wrap: anywhere;
 }
 
 /* الوصف */
+
 .description-card {
   padding: 30px;
 }
@@ -286,9 +298,11 @@
   color: var(--text-secondary);
   line-height: 1.9;
   font-size: 1rem;
+  overflow-wrap: anywhere;
 }
 
 /* المميزات */
+
 .features-card {
   padding: 30px;
 }
@@ -309,19 +323,22 @@
   border-radius: var(--radius-md);
   font-size: 0.95rem;
   color: var(--text-secondary);
+  overflow-wrap: anywhere;
 }
 
 .check-icon {
   color: #10b981;
   font-size: 0.85rem;
+  flex-shrink: 0;
 }
 
 /* الاستجابة */
+
 @media (max-width: 1024px) {
   .details-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .details-image-section {
     position: static;
   }
@@ -331,36 +348,76 @@
   .details-header {
     padding: 30px 0 20px;
   }
-  
+
   .details-content {
-    padding: 30px 0 60px;
+    padding: 30px 12px 60px;
   }
-  
+
+  .details-header .container {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .details-grid {
+    width: 100%;
+    gap: 25px;
+  }
+
+  .main-image-wrapper {
+    padding: 12px;
+  }
+
+  .main-car-image {
+    max-width: 100%;
+  }
+
+  .specs-card,
+  .description-card,
+  .features-card,
+  .details-price-card {
+    padding: 20px;
+  }
+
   .specs-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .price-big {
     font-size: 2rem;
+    overflow-wrap: anywhere;
   }
-  
+
   .price-actions {
     flex-direction: column;
   }
-  
+
+  .price-actions .btn {
+    width: 100%;
+  }
+
   .image-actions {
     top: 15px;
     left: 15px;
   }
-  
+
   .image-action-btn {
     width: 38px;
     height: 38px;
     font-size: 0.85rem;
   }
+
+  .car-details-title {
+    font-size: clamp(1.6rem, 8vw, 2.2rem);
+    overflow-wrap: anywhere;
+  }
+
+  .car-model {
+    overflow-wrap: anywhere;
+  }
 }
 
 /* سيارات ذات صلة */
+
 .related-cars-section {
   margin-top: 30px;
 }
@@ -405,11 +462,13 @@
 .related-car-name {
   font-size: 1rem;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .related-car-price {
   font-size: 0.95rem;
   color: var(--text-secondary);
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 768px) {
