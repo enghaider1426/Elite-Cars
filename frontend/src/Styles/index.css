@@ -1,0 +1,451 @@
+/* ===================================
+   المتغيرات والإعدادات الأساسية
+   =================================== */
+:root {
+  /* الألوان الرئيسية */
+  --primary-gold: #D4AF37;
+  --primary-gold-light: #F4E4BC;
+  --primary-dark: #0a0a0a;
+  --secondary-dark: #141414;
+  --card-bg: rgba(255, 255, 255, 0.03);
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  
+  /* ألوان النص */
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --text-muted: #666666;
+  
+  /* التدرجات */
+  --gradient-gold: linear-gradient(135deg, #D4AF37 0%, #F4E4BC 50%, #D4AF37 100%);
+  --gradient-dark: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
+  --gradient-card: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+  
+  /* الظلال */
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
+  --shadow-gold: 0 4px 20px rgba(212, 175, 55, 0.3);
+  
+  /* الخطوط */
+  --font-primary: 'Tajawal', sans-serif;
+  
+  /* الانتقالات */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+  
+  /* الحدود */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 30px;
+}
+
+/* ===================================
+   إعادة التعيين الأساسية
+   =================================== */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-primary);
+  background-color: var(--primary-dark);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+/* شريط التمرير المخصص */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--primary-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-gold);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-gold-light);
+}
+
+/* ===================================
+   الأنماط العامة
+   =================================== */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+.main-content {
+  flex: 1;
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+/* الحاويات */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.container-wide {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+/* العناوين */
+.section-title {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 1rem;
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.section-subtitle {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  margin-bottom: 4rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* الأزرار */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 32px;
+  border: none;
+  border-radius: var(--radius-xl);
+  font-family: var(--font-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--gradient-gold);
+  color: var(--primary-dark);
+  box-shadow: var(--shadow-gold);
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(212, 175, 55, 0.5);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 2px solid var(--glass-border);
+  backdrop-filter: blur(10px);
+}
+
+.btn-secondary:hover {
+  border-color: var(--primary-gold);
+  color: var(--primary-gold);
+  transform: translateY(-3px);
+}
+
+.btn-danger {
+  background: rgba(220, 53, 69, 0.15);
+  color: #dc3545;
+  border: 2px solid rgba(220, 53, 69, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.btn-danger:hover {
+  background: rgba(220, 53, 69, 0.25);
+  border-color: #dc3545;
+  color: #ff6b7a;
+  transform: translateY(-3px);
+}
+
+.whatsapp-btn {
+  background: rgba(37, 211, 102, 0.15);
+  color: #25d366;
+  border: 2px solid rgba(37, 211, 102, 0.3);
+}
+
+.whatsapp-btn:hover {
+  background: rgba(37, 211, 102, 0.25);
+  border-color: #25d366;
+  color: #4aff8a;
+  transform: translateY(-3px);
+}
+
+.btn-icon {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+/* Glassmorphism Card */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-normal);
+}
+
+.glass-card:hover {
+  border-color: rgba(212, 175, 55, 0.3);
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ===================================
+   الرسوم المتحركة
+   =================================== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease forwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.6s ease forwards;
+}
+
+/* ===================================
+   الاستجابة للموبايل
+   =================================== */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 15px;
+  }
+  
+  .container-wide {
+    padding: 0 20px;
+  }
+  
+  .section-title {
+    font-size: 1.8rem;
+  }
+  
+  .section-subtitle {
+    font-size: 0.95rem;
+    margin-bottom: 2.5rem;
+  }
+  
+  .btn {
+    padding: 12px 24px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn {
+    padding: 10px 20px;
+    font-size: 0.85rem;
+  }
+}
+
+/* انتقال تسجيل الدخول */
+.app-transition-out {
+  animation: fadeOutScale 0.6s ease forwards;
+}
+
+@keyframes fadeOutScale {
+  to {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+}
+
+/* === أنماط إضافية للأزرار === */
+.btn-lg {
+  padding: 18px 40px;
+  font-size: 1.15rem;
+}
+
+/* Skeleton loading */
+.skeleton {
+  background: linear-gradient(90deg, var(--glass-bg) 25%, rgba(255,255,255,0.08) 50%, var(--glass-bg) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-md);
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+
+.empty-state p {
+  font-size: 1.1rem;
+  margin-top: 12px;
+}
+
+/* Toast notification */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 14px 28px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-primary);
+  font-size: 0.95rem;
+  z-index: 10000;
+  animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+}
+
+.toast-success {
+  background: rgba(40, 167, 69, 0.95);
+  color: white;
+}
+
+.toast-error {
+  background: rgba(220, 53, 69, 0.95);
+  color: white;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* ===================================
+   الوضع الفاتح
+   =================================== */
+
+html[data-theme="light"] {
+  --primary-dark: #f5f5f5;
+  --secondary-dark: #ffffff;
+  --card-bg: rgba(0, 0, 0, 0.03);
+  --glass-bg: rgba(255, 255, 255, 0.78);
+  --glass-border: rgba(0, 0, 0, 0.10);
+
+  --text-primary: #151515;
+  --text-secondary: #555555;
+  --text-muted: #777777;
+
+  --gradient-dark: linear-gradient(180deg, #ffffff 0%, #f3f3f3 100%);
+  --gradient-card: linear-gradient(145deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.015) 100%);
+
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.10);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.14);
+}
+
+html[data-theme="light"] body {
+  background-color: var(--primary-dark);
+  color: var(--text-primary);
+}
+
+html[data-theme="light"] .profile-field input,
+html[data-theme="light"] .password-input-wrapper input {
+  background: rgba(0, 0, 0, 0.025);
+  color: var(--text-primary);
+}
+
+html[data-theme="light"] .profile-field input:focus,
+html[data-theme="light"] .password-input-wrapper input:focus {
+  background: rgba(212, 175, 55, 0.06);
+}
+
+html[data-theme="light"] .favorite-card,
+html[data-theme="light"] .recently-viewed-card {
+  background: rgba(0, 0, 0, 0.025);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+html[data-theme="light"] .role-badge.role-user {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+html[data-theme="light"] .profile-setting-btn {
+  background: rgba(0, 0, 0, 0.025);
+  color: var(--text-secondary);
+}
+
+html[data-theme="light"] .profile-setting-btn.active {
+  background: rgba(212, 175, 55, 0.12);
+}
+
+html[data-theme="light"] ::-webkit-scrollbar-track {
+  background: #eeeeee;
+}

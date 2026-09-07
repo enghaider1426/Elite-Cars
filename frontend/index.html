@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset='UTF-8' />
+    <link rel='icon' type='image/svg+xml' href='/favicon.svg' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, viewport-fit=cover' />
+    <meta name='theme-color' content='#0a0a0a' />
+    <meta name='robots' content='index, follow' />
+    <!-- ضبط اللغة والاتجاه قبل أول paint لمنع وميض الترجمة (FOUC) -->
+    <script>
+      (function () {
+        try {
+          var lang = localStorage.getItem('elite-cars-language');
+          var theme = localStorage.getItem('elite-cars-theme');
+          var html = document.documentElement;
+          var useLang = lang === 'en' ? 'en' : 'ar';
+          html.lang = useLang;
+          html.dir = useLang === 'en' ? 'ltr' : 'rtl';
+          html.dataset.language = useLang;
+          if (theme) html.dataset.theme = theme === 'dark' ? 'dark' : 'light';
+        } catch (e) {}
+      })();
+    </script>
+    <meta name='description' content='Elite Cars - معرض السيارات الفاخرة في أدلب. اكتشف مجموعة مختارة من أرقى السيارات العالمية بأفضل الأسعار وضمان الجودة. مرسيدس، بي ام دبليو، أودي، لامبورغيني والمزيد.' />
+    <link rel='canonical' href='%VITE_SITE_URL%' />
+    <!-- Open Graph -->
+    <meta property='og:title' content='Elite Cars | معرض السيارات الفاخرة' />
+    <meta property='og:description' content='وجهتك الأولى للسيارات الفاخرة في سوريا. مرسيدس، بي ام دبليو، أودي، لامبورغيني والمزيد.' />
+    <meta property='og:type' content='website' />
+    <meta property='og:locale' content='ar_SY' />
+    <meta property='og:site_name' content='Elite Cars' />
+    <meta property='og:url' content='%VITE_SITE_URL%' />
+    <meta property='og:image' content='%VITE_SITE_URL%/og-image.jpg' />
+    <!-- Twitter -->
+    <meta name='twitter:card' content='summary_large_image' />
+    <meta name='twitter:title' content='Elite Cars | معرض السيارات الفاخرة' />
+    <meta name='twitter:description' content='وجهتك الأولى للسيارات الفاخرة. مرسيدس، بي ام دبليو، أودي، لامبورغيني والمزيد.' />
+    <link rel='preconnect' href='https://fonts.googleapis.com' />
+    <link rel='preconnect' href='https://fonts.gstatic.com' crossorigin />
+    <link href='https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap' rel='stylesheet' />
+    <title>Elite Cars | معرض السيارات الفاخرة</title>
+    <script type='application/ld+json'>{
+  "@context": "https://schema.org",
+  "@type": "AutoDealer",
+  "name": "Elite Cars",
+  "description": "معرض السيارات الفاخرة في سوريا / أدلب / كفرسجنة",
+  "url": "%VITE_SITE_URL%",
+  "telephone": "+994406787168",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "كفرسجنة",
+    "addressRegion": "أدلب",
+    "addressCountry": "SY"
+  },
+  "openingHours": "Mo-Sa 09:00-20:00",
+  "brand": ["مرسيدس", "بي ام دبليو", "أودي", "لامبورغيني", "بوجاتي", "رولز رويس", "لكزس", "تيسلا"]
+}</script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

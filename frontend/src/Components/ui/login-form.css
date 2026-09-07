@@ -1,0 +1,451 @@
+/* ============================================================
+   login-form.css — SmokeyBackground + LoginForm
+   Converted from Tailwind utilities to plain CSS.
+
+   Original used: bg-white/10, backdrop-blur-lg, rounded-2xl,
+   border-white/20, shadow-2xl, floating label pattern with
+   peer-focus + transform.
+
+   Adapted for:
+     - Elite Cars RTL Arabic layout
+     - Plain CSS (no Tailwind dependency)
+     - Luxury champagne accent (#b8945a) for the WebGL glow
+   ============================================================ */
+
+/* ============ SmokeyBackground wrapper ============ */
+.smokey-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0a0a0c; /* deep ink — luxury base */
+}
+
+.smokey-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Subtle dark overlay on top of the WebGL canvas for depth */
+.smokey-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(10, 10, 12, 0) 0%,
+      rgba(10, 10, 12, 0.35) 80%,
+      rgba(10, 10, 12, 0.6) 100%
+    );
+  pointer-events: none;
+  /* Equivalent of backdrop-blur-sm from the original */
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* ============ Login card (glassmorphism) ============ */
+.login-card-glass {
+  width: 100%;
+  max-width: 24rem; /* max-w-sm */
+  padding: 32px; /* p-8 */
+  background: rgba(255, 255, 255, 0.08); /* bg-white/10 */
+  backdrop-filter: blur(16px); /* backdrop-blur-lg */
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 1rem; /* rounded-2xl */
+  border: 1px solid rgba(255, 255, 255, 0.18); /* border-white/20 */
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+/* ============ Card header ============ */
+.login-glass-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.login-glass-title {
+  font-size: 1.875rem; /* text-3xl */
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+  margin: 0 0 8px;
+}
+
+.login-glass-subtitle {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ============ Form ============ */
+.login-glass-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px; /* space-y-6 */
+}
+
+/* ============ Server error banner ============ */
+.login-glass-error {
+  padding: 10px 12px;
+  background: rgba(185, 28, 28, 0.18);
+  border: 1px solid rgba(254, 202, 202, 0.4);
+  border-radius: 0.5rem;
+  color: #fecaca;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  animation: glass-fade-in 0.2s ease;
+}
+
+/* ============ Field with floating label ============ */
+.login-glass-field {
+  position: relative;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The input itself */
+.login-glass-input {
+  display: block;
+  width: 100%;
+  height: 44px;
+  padding: 10px 0;
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: #ffffff;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.3); /* border-b-2 border-gray-300 */
+  border-radius: 0;
+  outline: none;
+  transition: border-color 0.3s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.login-glass-input::placeholder {
+  color: transparent;
+}
+
+.login-glass-input:hover:not(:disabled) {
+  border-bottom-color: rgba(255, 255, 255, 0.5);
+}
+
+.login-glass-input:focus {
+  border-bottom-color: #b8945a; /* champagne gold replaces original blue-500 */
+  box-shadow: 0 1px 0 0 #b8945a;
+}
+
+.login-glass-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.login-glass-input.has-error {
+  border-bottom-color: #ef4444;
+}
+
+/* Make room for the password toggle button (RTL: toggle on the right side) */
+[dir='rtl'] .login-glass-input.with-toggle {
+  padding-right: 36px;
+}
+
+/* ============ Floating label ============ */
+.login-glass-label {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  inset-inline-start: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.65);
+  pointer-events: none;
+  transition:
+    transform 0.3s ease,
+    color 0.3s ease,
+    font-size 0.3s ease;
+  transform-origin: 0 50%;
+  z-index: -1; /* -z-10 in original */
+}
+
+.login-glass-label-icon {
+  font-size: 14px;
+}
+
+/* Float the label up when input is focused OR has a value */
+.login-glass-input:focus + .login-glass-label,
+.login-glass-input.has-value + .login-glass-label {
+  transform: translateY(-26px) scale(0.85);
+  color: #b8945a; /* peer-focus:text-blue-400 → champagne */
+}
+
+/* ============ Input row (for password with toggle) ============ */
+.login-glass-input-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* ============ Password visibility toggle ============ */
+.login-glass-toggle {
+  position: absolute;
+  inset-inline-start: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.18s ease, background 0.18s ease;
+  z-index: 2;
+}
+
+.login-glass-toggle:hover:not(:disabled) {
+  color: #b8945a;
+  background: rgba(184, 148, 90, 0.12);
+}
+
+.login-glass-toggle:focus-visible {
+  outline: 2px solid #b8945a;
+  outline-offset: 1px;
+}
+
+.login-glass-toggle:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.login-glass-toggle svg {
+  font-size: 14px;
+}
+
+/* ============ Field error message ============ */
+.login-glass-field-err {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: #fca5a5;
+  line-height: 1.3;
+  animation: glass-fade-in 0.18s ease;
+}
+
+/* ============ Options row ============ */
+.login-glass-options {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: -8px;
+}
+
+.login-glass-forgot {
+  font-size: 0.75rem;
+  color: #b8945a;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.18s ease;
+  opacity: 0.9;
+}
+
+.login-glass-forgot:hover {
+  color: #d4af6e;
+  opacity: 1;
+}
+
+/* ============ Submit button ============ */
+.login-glass-submit {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 48px; /* py-3 + text line */
+  padding: 0 16px;
+  background: #b8945a; /* champagne gold (replaces blue-600) */
+  color: #0a0a0c;
+  border: 1px solid #b8945a;
+  border-radius: 0.5rem;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.12s ease, box-shadow 0.3s ease;
+}
+
+.login-glass-submit:hover:not(:disabled) {
+  background: #a8844a;
+  border-color: #a8844a;
+  box-shadow: 0 10px 30px -8px rgba(184, 148, 90, 0.5);
+  transform: translateY(-1px);
+}
+
+.login-glass-submit:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.login-glass-submit:focus-visible {
+  outline: 2px solid #b8945a;
+  outline-offset: 3px;
+}
+
+.login-glass-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.login-glass-submit-icon {
+  font-size: 12px;
+  transition: transform 0.3s ease;
+}
+
+.login-glass-submit:hover:not(:disabled) .login-glass-submit-icon {
+  transform: translateX(-4px); /* RTL: arrow moves left on hover */
+}
+
+.login-glass-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(10, 10, 12, 0.25);
+  border-top-color: #0a0a0c;
+  animation: glass-spin 0.7s linear infinite;
+}
+
+/* ============ Divider ============ */
+.login-glass-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 4px 0;
+}
+
+.login-glass-divider-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.login-glass-divider-text {
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* ============ Google button (in-card — shared by Login & Register) ============ */
+.login-glass-google {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.5rem;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.12s ease, box-shadow 0.2s ease;
+}
+
+.login-glass-google:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(184, 148, 90, 0.6);
+  box-shadow: 0 8px 24px -10px rgba(184, 148, 90, 0.45);
+  transform: translateY(-1px);
+}
+
+.login-glass-google:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.login-glass-google:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.login-glass-google:focus-visible {
+  outline: 2px solid #b8945a;
+  outline-offset: 3px;
+}
+
+.login-glass-google-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* ============ Alt action ============ */
+.login-glass-alt {
+  text-align: center;
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+.login-glass-alt-link {
+  color: #b8945a;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  transition: color 0.18s ease;
+}
+
+.login-glass-alt-link:hover {
+  color: #d4af6e;
+}
+
+/* ============ Animations ============ */
+@keyframes glass-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes glass-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============ Reduced motion ============ */
+@media (prefers-reduced-motion: reduce) {
+  .login-glass-form *,
+  .login-glass-form *::before,
+  .login-glass-form *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

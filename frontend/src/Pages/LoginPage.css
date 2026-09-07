@@ -1,0 +1,246 @@
+/* ============================================================
+   Login page wrapper — minimal styles for the page shell only.
+   The form itself is styled by /components/ui/login-form.css.
+   ============================================================ */
+
+.login-page {
+  position: relative;
+  width: 100%;
+  min-height: 100vh; /* standalone auth page — no Navbar / no Footer */
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #0a0a0c;
+  color: #ffffff;
+  overflow: hidden;
+  /* Force light rendering so autofill etc. behave consistently */
+  color-scheme: light;
+}
+
+/* The WebGL canvas + overlay sit behind everything */
+.login-page-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* The centered content sits above the background */
+.login-page-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 28rem; /* 448px — gives the card room to breathe */
+}
+
+/* ============ Success overlay ============ */
+.login-success-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 12, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: login-fade-in 0.2s ease;
+}
+
+.login-success-box {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 1rem;
+  padding: 28px 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  animation: login-success-pop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.login-success-check {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(184, 148, 90, 0.18);
+  color: #b8945a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.login-success-text {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.1px;
+}
+
+/* ============ Animations ============ */
+@keyframes login-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes login-success-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ============ Reduced motion ============ */
+@media (prefers-reduced-motion: reduce) {
+  .login-page *,
+  .login-page *::before,
+  .login-page *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ============ Forgot password modal ============ */
+.forgot-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 12, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  animation: login-fade-in 0.2s ease;
+}
+
+.forgot-modal {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 1rem;
+  padding: 28px 32px;
+  max-width: 400px;
+  width: 90%;
+  color: #ffffff;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.forgot-modal h3 {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.forgot-modal p {
+  margin: 0 0 20px;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+}
+
+.forgot-modal input {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.forgot-modal input:focus {
+  border-color: #b8945a;
+}
+
+.forgot-modal input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.forgot-msg {
+  margin-top: 12px;
+  padding: 8px 12px;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.forgot-msg.success {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #86efac;
+}
+
+.forgot-msg.error {
+  background: rgba(185, 28, 28, 0.15);
+  border: 1px solid rgba(254, 202, 202, 0.3);
+  color: #fecaca;
+}
+
+.forgot-modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+ }
+
+.forgot-cancel {
+  flex: 1;
+  height: 42px;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.forgot-cancel:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.forgot-submit {
+  flex: 1;
+  height: 42px;
+  border-radius: 0.5rem;
+  border: none;
+  background: #b8945a;
+  color: #0a0a0c;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.forgot-submit:hover:not(:disabled) {
+  background: #a8844a;
+}
+
+.forgot-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

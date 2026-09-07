@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D4AF37"/>
+      <stop offset="50%" stop-color="#F4E4BC"/>
+      <stop offset="100%" stop-color="#D4AF37"/>
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" rx="12" fill="#0a0a0a"/>
+  <rect x="1" y="1" width="46" height="46" rx="11" fill="none" stroke="url(#goldGrad)" stroke-width="1.5"/>
+  <g transform="translate(24, 24)">
+    <!-- Car silhouette -->
+    <path d="M-16,4 L-14,4 L-12,-2 L-6,-8 L6,-8 L12,-2 L14,4 L16,4 L16,8 L-16,8 Z" fill="url(#goldGrad)" opacity="0.9"/>
+    <!-- Windshield -->
+    <path d="M-5,-7 L-2,-2 L4,-2 L7,-7 Z" fill="#0a0a0a" opacity="0.6"/>
+    <!-- Wheels -->
+    <circle cx="-9" cy="8" r="4" fill="#0a0a0a" stroke="url(#goldGrad)" stroke-width="1.5"/>
+    <circle cx="9" cy="8" r="4" fill="#0a0a0a" stroke="url(#goldGrad)" stroke-width="1.5"/>
+    <circle cx="-9" cy="8" r="1.5" fill="url(#goldGrad)"/>
+    <circle cx="9" cy="8" r="1.5" fill="url(#goldGrad)"/>
+    <!-- Headlights -->
+    <rect x="14" y="1" width="3" height="2" rx="1" fill="#F4E4BC" opacity="0.8"/>
+    <rect x="-17" y="1" width="3" height="2" rx="1" fill="#F4E4BC" opacity="0.5"/>
+  </g>
+</svg>

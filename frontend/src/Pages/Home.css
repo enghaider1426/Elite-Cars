@@ -1,0 +1,105 @@
+/* ===================================
+   تنسيقات الصفحة الرئيسية
+   =================================== */
+.home-page {
+  overflow-x: hidden;
+}
+
+/* قسم البحث السريع */
+.quick-search-section {
+  padding: 40px 0;
+  margin-top: -40px;
+  position: relative;
+  z-index: 10;
+}
+
+/* قسم السيارات المميزة */
+.featured-section {
+  padding: 40px 0 80px;
+}
+
+.view-all-wrapper {
+  text-align: center;
+  margin-top: 50px;
+}
+
+.view-all-wrapper .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* CTA Section */
+.cta-section {
+  position: relative;
+  padding: 120px 0;
+  background: 
+    url('https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1920&q=80') center/cover no-repeat;
+  overflow: hidden;
+}
+
+.cta-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(10, 10, 10, 0.95), rgba(212, 175, 55, 0.1));
+}
+
+.cta-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.cta-content h2 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  margin-bottom: 20px;
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.cta-content p {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  margin-bottom: 40px;
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .quick-search-section {
+    margin-top: 0;
+    padding: 20px 0;
+  }
+  
+  .featured-section {
+    padding: 20px 0 50px;
+  }
+  
+  .cta-section {
+    padding: 80px 0;
+  }
+  
+  .cta-content p {
+    font-size: 1rem;
+  }
+  
+  .cta-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .cta-buttons .btn {
+    width: 100%;
+    max-width: 300px;
+  }
+}

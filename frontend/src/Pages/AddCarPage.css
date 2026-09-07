@@ -1,0 +1,23 @@
+/* ===================================
+   تنسيقات صفحة إضافة سيارة
+   =================================== */
+.add-car-page {
+  min-height: 100vh;
+  padding-top: 100px;
+}
+
+.add-header {
+  background: var(--gradient-dark);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.add-car-content {
+  padding: 40px 0 80px;
+  min-height: calc(100vh - 300px);
+}
+
+@media (max-width: 768px) {
+  .add-car-page {
+    padding-top: 80px;
+  }
+}

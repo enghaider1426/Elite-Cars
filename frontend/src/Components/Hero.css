@@ -1,0 +1,328 @@
+/* ===================================
+   تنسيقات قسم البطل
+   =================================== */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  padding-top: 120px;
+}
+
+/* الخلفية */
+.hero-background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.hero-bg-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(10, 10, 10, 0.97) 0%,
+    rgba(10, 10, 10, 0.85) 50%,
+    rgba(10, 10, 10, 0.9) 100%
+  );
+}
+
+/* الحاوية */
+.hero-container {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+
+/* المحتوى النصي */
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+/* الشارة */
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  padding: 10px 20px;
+  border-radius: var(--radius-xl);
+  font-size: 0.9rem;
+  color: var(--primary-gold-light);
+  width: fit-content;
+}
+
+.badge-icon {
+  color: var(--primary-gold);
+  font-size: 0.8rem;
+}
+
+/* العنوان */
+.hero-title {
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -1px;
+}
+
+.title-highlight {
+  display: block;
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* الوصف */
+.hero-description {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  max-width: 520px;
+}
+
+/* الأزرار */
+.hero-buttons {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.btn-lg {
+  padding: 18px 36px;
+  font-size: 1.05rem;
+}
+
+/* الإحصائيات */
+.hero-stats {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  padding: 25px 35px;
+  border-radius: var(--radius-lg);
+  width: fit-content;
+  margin-top: 20px;
+}
+
+.hero-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.stat-number {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--primary-gold);
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.stat-divider {
+  width: 1px;
+  height: 40px;
+  background: var(--glass-border);
+}
+
+/* صورة السيارة */
+.hero-image-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hero-image-container {
+  position: relative;
+  width: 100%;
+  max-width: 650px;
+}
+
+.hero-car-image {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.5));
+  animation: float 6s ease-in-out infinite;
+}
+
+.image-glow {
+  position: absolute;
+  bottom: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 100px;
+  background: radial-gradient(ellipse, rgba(212, 175, 55, 0.2) 0%, transparent 70%);
+  filter: blur(30px);
+}
+
+/* بطاقة السعر العائمة */
+.floating-price-card {
+  position: absolute;
+  bottom: 80px;
+  left: -20px;
+  padding: 25px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: float 4s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+.price-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.price-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--primary-gold);
+}
+
+.price-car {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* مؤشر التمرير */
+.scroll-indicator {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  animation: fadeIn 1s ease forwards;
+  animation-delay: 1s;
+  opacity: 0;
+}
+
+.scroll-line {
+  width: 2px;
+  height: 40px;
+  background: linear-gradient(to bottom, var(--primary-gold), transparent);
+  animation: pulse 2s infinite;
+}
+
+/* الاستجابة */
+@media (max-width: 1024px) {
+  .hero-container {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 40px;
+  }
+  
+  .hero-content {
+    align-items: center;
+  }
+  
+  .hero-description {
+    max-width: 100%;
+  }
+  
+  .hero-buttons {
+    justify-content: center;
+  }
+  
+  .hero-stats {
+    margin: 0 auto;
+  }
+  
+  .hero-image-wrapper {
+    order: -1;
+  }
+  
+  .hero-image-container {
+    max-width: 500px;
+  }
+  
+  .floating-price-card {
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding-top: 80px;
+    min-height: auto;
+    padding-bottom: 60px;
+  }
+  
+  .hero-container {
+    padding: 20px;
+  }
+  
+  .hero-title {
+    font-size: 2rem;
+  }
+  
+  .hero-description {
+    font-size: 1rem;
+  }
+  
+  .hero-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .hero-buttons .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .hero-stats {
+    flex-direction: column;
+    gap: 20px;
+    padding: 25px;
+    width: 100%;
+  }
+  
+  .stat-divider {
+    width: 40px;
+    height: 1px;
+  }
+  
+  .floating-price-card {
+    position: static;
+    transform: none;
+    margin-top: 20px;
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .scroll-indicator {
+    display: none;
+  }
+}

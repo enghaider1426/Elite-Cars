@@ -1,0 +1,425 @@
+/* ===================================
+   تنسيقات صفحة تفاصيل السيارة
+   =================================== */
+.car-details-page {
+  min-height: 100vh;
+  padding-top: 80px;
+}
+
+/* Header */
+.details-header {
+  padding: 40px 0 30px;
+  background: var(--gradient-dark);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+  transition: color var(--transition-fast);
+}
+
+.back-link:hover {
+  color: var(--primary-gold);
+}
+
+.header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.car-brand-tag {
+  display: inline-block;
+  width: fit-content;
+  padding: 6px 16px;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: var(--radius-xl);
+  color: var(--primary-gold);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.car-details-title {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.car-model {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+/* المحتوى */
+.details-content {
+  padding: 50px 0 80px;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 40px;
+  align-items: start;
+}
+
+/* قسم الصورة */
+.details-image-section {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  position: sticky;
+  top: 100px;
+}
+
+.main-image-wrapper {
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.main-car-image {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  aspect-ratio: 4/3;
+  object-fit: cover;
+}
+
+.image-actions {
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.image-action-btn {
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: 50%;
+  color: var(--text-primary);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.image-action-btn:hover {
+  background: var(--primary-gold);
+  color: var(--primary-dark);
+  border-color: var(--primary-gold);
+}
+
+.image-action-btn.favorite:hover,
+.image-action-btn.favorite.active {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: white;
+}
+
+.image-action-btn.shared {
+  background: #10b981;
+  border-color: #10b981;
+  color: white;
+}
+
+/* شارة الحالة */
+.status-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: var(--radius-xl);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-available {
+  background: rgba(40, 167, 69, 0.15);
+  color: #28a745;
+  border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.status-sold {
+  background: rgba(220, 53, 69, 0.15);
+  color: #dc3545;
+  border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.status-reserved {
+  background: rgba(255, 193, 7, 0.15);
+  color: #ffc107;
+  border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+/* بطاقة السعر */
+.details-price-card {
+  padding: 30px;
+  text-align: center;
+}
+
+.details-price-card .price-label {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.price-big {
+  display: block;
+  font-size: 2.5rem;
+  font-weight: 900;
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 25px;
+}
+
+.price-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.price-actions .btn {
+  flex: 1;
+  justify-content: center;
+}
+
+.whatsapp-btn {
+  background: #25d366 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.whatsapp-btn:hover {
+  background: #128c7e !important;
+}
+
+/* قسم المعلومات */
+.details-info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.card-heading {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+/* المواصفات */
+.specs-card {
+  padding: 30px;
+}
+
+.specs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.spec-detail {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  background: var(--glass-bg);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.spec-detail:hover {
+  background: rgba(212, 175, 55, 0.05);
+}
+
+.spec-detail-icon {
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(212, 175, 55, 0.1);
+  border-radius: var(--radius-sm);
+  color: var(--primary-gold);
+  font-size: 1rem;
+}
+
+.spec-detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.spec-detail-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.spec-detail-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* الوصف */
+.description-card {
+  padding: 30px;
+}
+
+.description-text {
+  color: var(--text-secondary);
+  line-height: 1.9;
+  font-size: 1rem;
+}
+
+/* المميزات */
+.features-card {
+  padding: 30px;
+}
+
+.features-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.features-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 15px;
+  background: var(--glass-bg);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.check-icon {
+  color: #10b981;
+  font-size: 0.85rem;
+}
+
+/* الاستجابة */
+@media (max-width: 1024px) {
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .details-image-section {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .details-header {
+    padding: 30px 0 20px;
+  }
+  
+  .details-content {
+    padding: 30px 0 60px;
+  }
+  
+  .specs-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .price-big {
+    font-size: 2rem;
+  }
+  
+  .price-actions {
+    flex-direction: column;
+  }
+  
+  .image-actions {
+    top: 15px;
+    left: 15px;
+  }
+  
+  .image-action-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 0.85rem;
+  }
+}
+
+/* سيارات ذات صلة */
+.related-cars-section {
+  margin-top: 30px;
+}
+
+.related-cars-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px;
+  margin-top: 20px;
+}
+
+.related-car-card {
+  text-decoration: none;
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+.related-car-card:hover {
+  transform: translateY(-5px);
+}
+
+.related-car-image {
+  width: 100%;
+  aspect-ratio: 16/10;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+}
+
+.related-car-info {
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.related-car-brand {
+  font-size: 0.8rem;
+  color: var(--primary-gold);
+  font-weight: 600;
+}
+
+.related-car-name {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.related-car-price {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+  .related-cars-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .related-cars-grid {
+    grid-template-columns: 1fr;
+  }
+}
