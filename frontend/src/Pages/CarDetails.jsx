@@ -22,16 +22,20 @@ function CarDetails({ cars, onDeleteCar, onView }) {
   const { isFavorite, toggleFavorite } = useFavorites()
 
   const [shareMessage, setShareMessage] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
-  const car = cars.find(
-    (c) => c.id?.toString() === id || c._id?.toString() === id
+  // حماية من البيانات الناقصة
+  const safeCars = Array.isArray(cars) ? cars : []
+
+  const car = safeCars.find(
+    (c) => c?.id?.toString() === id || c?._id?.toString() === id
   )
 
   const carId = car
-    ? String(car._id || car.id)
+    ? String(car._id || car.id || '')
     : ''
 
-  const favorited = car
+  const favorited = carId
     ? isFavorite(carId)
     : false
 
@@ -48,77 +52,183 @@ function CarDetails({ cars, onDeleteCar, onView }) {
   }
 
   // =========================================================
-  // اختيار بيانات السيارة حسب اللغة
+  // أدوات حماية البيانات والترجمة
   // =========================================================
 
   const isEnglish = language === 'en'
 
-  const carName = isEnglish
-    ? (car.nameEn || car.name)
-    : car.name
+  const safeText = (value, fallback = '—') => {
+    if (
+      value === null ||
+      value === undefined ||
+      String(value).trim() === ''
+    ) {
+      return fallback
+    }
 
-  const manufacturer = isEnglish
-    ? (car.manufacturerEn || car.manufacturer)
-    : car.manufacturer
+    return String(value)
+  }
 
-  const model = isEnglish
-    ? (car.modelEn || car.model)
-    : car.model
+  const translateCarValue = (
+    arabicValue,
+    englishValue,
+    fallbackEnglish = '—',
+    fallbackArabic = '—'
+  ) => {
+    if (isEnglish) {
+      if (
+        englishValue !== null &&
+        englishValue !== undefined &&
+        String(englishValue).trim() !== ''
+      ) {
+        return String(englishValue)
+      }
 
-  const description = isEnglish
-    ? (car.descriptionEn || car.description)
-    : car.description
+      if (
+        arabicValue !== null &&
+        arabicValue !== undefined &&
+        String(arabicValue).trim() !== ''
+      ) {
+        return t(String(arabicValue))
+      }
+
+      return fallbackEnglish
+    }
+
+    return safeText(arabicValue, fallbackArabic)
+  }
+
+  // =========================================================
+  // بيانات السيارة
+  // =========================================================
+
+  const carName = translateCarValue(
+    car.name,
+    car.nameEn,
+    'Car',
+    'سيارة'
+  )
+
+  const manufacturer = translateCarValue(
+    car.manufacturer,
+    car.manufacturerEn,
+    '—',
+    '—'
+  )
+
+  const model = translateCarValue(
+    car.model,
+    car.modelEn,
+    '—',
+    '—'
+  )
+
+  const description = translateCarValue(
+    car.description,
+    car.descriptionEn,
+    isEnglish
+      ? 'No description available.'
+      : 'لا يوجد وصف متاح.',
+    'لا يوجد وصف متاح.'
+  )
+
+  // =========================================================
+  // المميزات
+  // =========================================================
+
+  const arabicFeatures = Array.isArray(car.features)
+    ? car.features
+    : []
+
+  const englishFeatures = Array.isArray(car.featuresEn)
+    ? car.featuresEn
+    : []
 
   const features = isEnglish
     ? (
-        car.featuresEn?.length
-          ? car.featuresEn
-          : car.features
+        englishFeatures.length > 0
+          ? englishFeatures
+          : arabicFeatures
+              .filter(
+                feature =>
+                  feature !== null &&
+                  feature !== undefined &&
+                  String(feature).trim() !== ''
+              )
+              .map(feature => t(String(feature)))
       )
-    : car.features
-
-  const bodyType = isEnglish
-    ? (car.bodyTypeEn || car.bodyType || 'Sedan')
-    : (car.bodyType || 'سيدان')
-
-  const fuelType = isEnglish
-    ? (car.fuelTypeEn || car.fuelType || 'Gasoline')
-    : (car.fuelType || 'بنزين')
-
-  const transmission = isEnglish
-    ? (
-        car.transmissionEn ||
-        car.transmission ||
-        'Automatic'
-      )
-    : (
-        car.transmission ||
-        'أوتوماتيك'
+    : arabicFeatures.filter(
+        feature =>
+          feature !== null &&
+          feature !== undefined &&
+          String(feature).trim() !== ''
       )
 
-  const carColor = isEnglish
-    ? (car.colorEn || car.color || 'White')
-    : (car.color || 'أبيض')
+  // =========================================================
+  // المواصفات مع حماية البيانات + ترجمة تلقائية عند غياب En
+  // =========================================================
 
+  const bodyType = translateCarValue(
+    car.bodyType,
+    car.bodyTypeEn,
+    'Sedan',
+    'سيدان'
+  )
+
+  const fuelType = translateCarValue(
+    car.fuelType,
+    car.fuelTypeEn,
+    'Gasoline',
+    'بنزين'
+  )
+
+  const transmission = translateCarValue(
+    car.transmission,
+    car.transmissionEn,
+    'Automatic',
+    'أوتوماتيك'
+  )
+
+  const carColor = translateCarValue(
+    car.color,
+    car.colorEn,
+    'White',
+    'أبيض'
+  )
+
+  // =========================================================
   // تنسيق السعر
+  // =========================================================
+
+  const numericPrice = Number(car.price)
+
   const formatPrice = (price) => {
+    const validPrice = Number(price)
+
+    if (!Number.isFinite(validPrice)) {
+      return '—'
+    }
+
     return new Intl.NumberFormat(
       language === 'en' ? 'en-US' : 'ar-SA'
-    ).format(price) + ' $'
+    ).format(validPrice) + ' $'
   }
 
+  // =========================================================
   // مشاركة الرابط
+  // =========================================================
+
   const handleShare = async () => {
     const shareData = {
       title: carName,
-      text: `${carName} - ${formatPrice(car.price)}`,
+      text: `${carName} - ${formatPrice(numericPrice)}`,
       url: window.location.href
     }
 
     try {
       if (navigator.share) {
         await navigator.share(shareData)
-      } else {
+      } else if (navigator.clipboard) {
         await navigator.clipboard.writeText(
           window.location.href
         )
@@ -131,15 +241,25 @@ function CarDetails({ cars, onDeleteCar, onView }) {
         )
       }
     } catch {
-      // المستخدم ألغى المشاركة
+      // المستخدم ألغى المشاركة أو المتصفح منعها
     }
   }
 
+  // =========================================================
   // إضافة / إزالة السيارة من المفضلة
+  // =========================================================
+
   const handleFavorite = async () => {
     if (!user) {
       alert(
         t('يجب تسجيل الدخول أولاً لإضافة السيارة إلى المفضلة')
+      )
+      return
+    }
+
+    if (!carId) {
+      alert(
+        t('تعذر تحديد السيارة')
       )
       return
     }
@@ -160,24 +280,81 @@ function CarDetails({ cars, onDeleteCar, onView }) {
       console.error('Favorite error:', error)
 
       alert(
-        t(error.message || 'حدث خطأ أثناء تحديث المفضلة')
+        t(error?.message || 'حدث خطأ أثناء تحديث المفضلة')
       )
     }
   }
 
+  // =========================================================
   // حذف السيارة - فقط للمسؤولين
+  // =========================================================
+
   const handleDelete = async () => {
-    if (
-      window.confirm(
-        t('هل أنت متأكد من حذف هذه السيارة؟')
+    if (deleteLoading) {
+      return
+    }
+
+    if (user?.role !== 'admin') {
+      alert(
+        t('ليس لديك صلاحية حذف السيارة')
       )
-    ) {
-      await onDeleteCar(car.id || car._id)
-      setTimeout(() => navigate('/inventory'), 500)
+      return
+    }
+
+    if (!carId) {
+      alert(
+        t('تعذر تحديد السيارة المراد حذفها')
+      )
+      return
+    }
+
+    if (typeof onDeleteCar !== 'function') {
+      console.error(
+        'Delete error: onDeleteCar is not available'
+      )
+
+      alert(
+        t('تعذر تنفيذ عملية الحذف حالياً')
+      )
+      return
+    }
+
+    const confirmed = window.confirm(
+      t('هل أنت متأكد من حذف هذه السيارة؟')
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setDeleteLoading(true)
+
+    try {
+      await onDeleteCar(carId)
+
+      alert(
+        t('تم حذف السيارة بنجاح')
+      )
+
+      navigate('/inventory', { replace: true })
+    } catch (error) {
+      console.error('Delete car error:', error)
+
+      alert(
+        t(
+          error?.message ||
+          'حدث خطأ أثناء حذف السيارة'
+        )
+      )
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
+  // =========================================================
   // شارة الحالة
+  // =========================================================
+
   const statusConfig = {
     available: {
       label: t('متاح'),
@@ -197,18 +374,30 @@ function CarDetails({ cars, onDeleteCar, onView }) {
     ? statusConfig[car.status]
     : null
 
+  // =========================================================
+  // المواصفات
+  // =========================================================
+
+  const validMileage = Number(car.mileage)
+
+  const formattedMileage = Number.isFinite(validMileage)
+    ? new Intl.NumberFormat(
+        language === 'en' ? 'en-US' : 'ar-SA'
+      ).format(validMileage)
+    : '—'
+
   const specifications = [
     {
       icon: <FaCalendarAlt />,
       label: t('سنة الصنع'),
-      value: car.year
+      value: car.year || '—'
     },
     {
       icon: <FaTachometerAlt />,
       label: t('المسافة'),
-      value: `${new Intl.NumberFormat(
-        language === 'en' ? 'en-US' : 'ar-SA'
-      ).format(car.mileage)} ${language === 'en' ? 'km' : 'كم'}`
+      value: `${formattedMileage} ${
+        language === 'en' ? 'km' : 'كم'
+      }`
     },
     {
       icon: <FaGasPump />,
@@ -232,12 +421,18 @@ function CarDetails({ cars, onDeleteCar, onView }) {
     }
   ]
 
-  // سيارات ذات صلة (نفس الشركة المصنعة)
+  // =========================================================
+  // سيارات ذات صلة
+  // =========================================================
+
   const relatedCars = (() => {
-    const sameManufacturer = cars.filter(
+    const sameManufacturer = safeCars.filter(
       c =>
+        c &&
+        c.manufacturer &&
+        car.manufacturer &&
         c.manufacturer === car.manufacturer &&
-        String(c._id || c.id) !== carId
+        String(c._id || c.id || '') !== carId
     )
 
     if (sameManufacturer.length >= 3) {
@@ -245,10 +440,11 @@ function CarDetails({ cars, onDeleteCar, onView }) {
     }
 
     if (sameManufacturer.length > 0) {
-      const others = cars.filter(
+      const others = safeCars.filter(
         c =>
+          c &&
           c.manufacturer !== car.manufacturer &&
-          String(c._id || c.id) !== carId
+          String(c._id || c.id || '') !== carId
       )
 
       return [
@@ -257,9 +453,11 @@ function CarDetails({ cars, onDeleteCar, onView }) {
       ].slice(0, 3)
     }
 
-    return cars
+    return safeCars
       .filter(
-        c => String(c._id || c.id) !== carId
+        c =>
+          c &&
+          String(c._id || c.id || '') !== carId
       )
       .slice(0, 3)
   })()
@@ -331,7 +529,7 @@ function CarDetails({ cars, onDeleteCar, onView }) {
               <div className="main-image-wrapper glass-card">
 
                 <img
-                  src={car.image}
+                  src={car.image || ''}
                   alt={carName}
                   className="main-car-image"
                   loading="lazy"
@@ -387,7 +585,7 @@ function CarDetails({ cars, onDeleteCar, onView }) {
                 </span>
 
                 <span className="price-big">
-                  {formatPrice(car.price)}
+                  {formatPrice(numericPrice)}
                 </span>
 
                 <div className="price-actions">
@@ -415,9 +613,12 @@ function CarDetails({ cars, onDeleteCar, onView }) {
                       onClick={handleDelete}
                       className="btn btn-danger"
                       aria-label={t('حذف السيارة')}
+                      disabled={deleteLoading}
                     >
                       <FaTrash />
-                      {t('حذف')}
+                      {deleteLoading
+                        ? t('جاري الحذف...')
+                        : t('حذف')}
                     </button>
                   )}
 
@@ -457,7 +658,7 @@ function CarDetails({ cars, onDeleteCar, onView }) {
                         </span>
 
                         <span className="spec-detail-value">
-                          {spec.value}
+                          {safeText(spec.value)}
                         </span>
 
                       </div>
@@ -474,32 +675,26 @@ function CarDetails({ cars, onDeleteCar, onView }) {
                   {t('الوصف')}
                 </h3>
 
-                <p
-                  className="description-text"
-                  data-no-auto-translate
-                >
+                <p className="description-text">
                   {description}
                 </p>
 
               </div>
 
               {/* المميزات */}
-              {features?.length > 0 && (
+              {features.length > 0 && (
                 <div className="features-card glass-card">
 
                   <h3 className="card-heading">
                     {t('المميزات')}
                   </h3>
 
-                  <ul
-                    className="features-list"
-                    data-no-auto-translate
-                  >
+                  <ul className="features-list">
 
                     {features.map((feature, i) => (
                       <li key={i}>
                         <FaCheck className="check-icon" />
-                        {feature}
+                        {safeText(feature)}
                       </li>
                     ))}
 
@@ -532,13 +727,20 @@ function CarDetails({ cars, onDeleteCar, onView }) {
               >
 
                 {relatedCars.map(rc => {
-                  const relatedName = isEnglish
-                    ? (rc.nameEn || rc.name)
-                    : rc.name
+                  const relatedName = translateCarValue(
+                    rc.name,
+                    rc.nameEn,
+                    'Car',
+                    'سيارة'
+                  )
 
-                  const relatedManufacturer = isEnglish
-                    ? (rc.manufacturerEn || rc.manufacturer)
-                    : rc.manufacturer
+                  const relatedManufacturer =
+                    translateCarValue(
+                      rc.manufacturer,
+                      rc.manufacturerEn,
+                      '—',
+                      '—'
+                    )
 
                   return (
                     <Link
@@ -548,7 +750,7 @@ function CarDetails({ cars, onDeleteCar, onView }) {
                     >
 
                       <img
-                        src={rc.image}
+                        src={rc.image || ''}
                         alt={relatedName}
                         className="related-car-image"
                         loading="lazy"
