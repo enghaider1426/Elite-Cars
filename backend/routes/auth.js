@@ -1,19 +1,10 @@
 const express = require('express');
-
 const router = express.Router();
-
 const crypto = require('crypto');
-
 const mongoose = require('mongoose');
-
-const nodemailer = require('nodemailer');
-
 const User = require('../models/User');
-
 const Car = require('../models/Car');
-
 const { protect, admin } = require('../middleware/auth');
-
 const { asyncHandler, ErrorResponse } = require('../middleware/errorHandler');
 
 const authCookieOptions = () => ({
@@ -41,20 +32,60 @@ const clearAuthCookie = (res) =>
 
 const AZ_PHONE_REGEX = /^\+?994\d{9}$/;
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: 465,
-  secure: true,
+/*
+ * =========================================================
+ * Resend Email Service
+ * =========================================================
+ *
+ * يستخدم Resend عبر HTTPS بدلاً من SMTP.
+ * هذا مناسب لـ Render Free لأننا لا نحتاج منافذ SMTP.
+ */
+const sendEmail = async ({
+  to,
+  subject,
+  text,
+  html,
+}) => {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error(
+      'RESEND_API_KEY غير موجود في متغيرات البيئة'
+    );
+  }
 
-  connectionTimeout: 15000,
-  greetingTimeout: 15000,
-  socketTimeout: 20000,
+  const from =
+    process.env.RESEND_FROM_EMAIL ||
+    'Elite Cars <onboarding@resend.dev>';
 
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+  const response = await fetch(
+    'https://api.resend.com/emails',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from,
+        to: [to],
+        subject,
+        text,
+        html,
+      }),
+    }
+  );
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(
+      data?.message ||
+        data?.error?.message ||
+        `Resend API error (${response.status})`
+    );
+  }
+
+  return data;
+};
 
 router.post(
   '/register',
@@ -121,8 +152,15 @@ router.post(
     await user.save();
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('Email verification token generated for:', user.email);
+      console.log(
+        'Email verification token generated for:',
+        user.email
+      );
     }
+
+    const frontendUrl =
+      process.env.FRONTEND_URL ||
+      'http://localhost:5173';
 
     const verificationUrl =
       `${frontendUrl}/verify-email?token=${encodeURIComponent(
@@ -130,24 +168,9 @@ router.post(
       )}`;
 
     try {
-      if (
-        !process.env.SMTP_USER ||
-        !process.env.SMTP_PASS
-      ) {
-        throw new Error(
-          'SMTP_USER أو SMTP_PASS غير موجود في ملف .env'
-        );
-      }
-
-      await transporter.sendMail({
-        from:
-          process.env.SMTP_FROM ||
-          process.env.SMTP_USER,
-
+      await sendEmail({
         to: user.email,
-
-        subject:
-          'تأكيد البريد الإلكتروني - Elite Cars',
+        subject: 'تأكيد البريد الإلكتروني - Elite Cars',
 
         text:
           `مرحباً ${user.name || ''}\n\n` +
@@ -208,7 +231,6 @@ router.post(
                 border-bottom:1px solid #2c2c2c;
               "
             >
-
               <div style="
                 font-size:30px;
                 font-weight:700;
@@ -227,7 +249,6 @@ router.post(
               ">
                 PREMIUM AUTOMOTIVE EXPERIENCE
               </div>
-
             </td>
           </tr>
 
@@ -312,7 +333,6 @@ router.post(
                       background:#b8945a;
                     "
                   >
-
                     <a
                       href="${verificationUrl}"
                       style="
@@ -328,7 +348,6 @@ router.post(
                     >
                       تأكيد البريد الإلكتروني
                     </a>
-
                   </td>
                 </tr>
               </table>
@@ -351,7 +370,6 @@ router.post(
                 text-align:left;
                 word-break:break-all;
               ">
-
                 <a
                   href="${verificationUrl}"
                   style="
@@ -362,7 +380,6 @@ router.post(
                 >
                   ${verificationUrl}
                 </a>
-
               </div>
 
               <p style="
@@ -387,7 +404,6 @@ router.post(
                 border-top:1px solid #252525;
               "
             >
-
               <div style="
                 color:#b8945a;
                 font-size:15px;
@@ -412,7 +428,6 @@ router.post(
               ">
                 © Elite Cars. جميع الحقوق محفوظة.
               </div>
-
             </td>
           </tr>
 
@@ -443,7 +458,6 @@ router.post(
     }
 
     const userResponse = user.toObject();
-
     delete userResponse.password;
 
     res.status(201).json({
@@ -514,7 +528,6 @@ router.post(
     setAuthCookie(res, token);
 
     const userResponse = user.toObject();
-
     delete userResponse.password;
 
     res.json({
@@ -643,22 +656,8 @@ router.post(
       )}`;
 
     try {
-      if (
-        !process.env.SMTP_USER ||
-        !process.env.SMTP_PASS
-      ) {
-        throw new Error(
-          'SMTP_USER أو SMTP_PASS غير موجود في ملف .env'
-        );
-      }
-
-      await transporter.sendMail({
-        from:
-          process.env.SMTP_FROM ||
-          process.env.SMTP_USER,
-
+      await sendEmail({
         to: user.email,
-
         subject:
           'إعادة تعيين كلمة المرور - Elite Cars',
 
@@ -722,7 +721,6 @@ router.post(
                 border-bottom:1px solid #2c2c2c;
               "
             >
-
               <div style="
                 font-size:30px;
                 font-weight:700;
@@ -741,7 +739,6 @@ router.post(
               ">
                 PREMIUM AUTOMOTIVE EXPERIENCE
               </div>
-
             </td>
           </tr>
 
@@ -833,7 +830,6 @@ router.post(
                       background:#b8945a;
                     "
                   >
-
                     <a
                       href="${resetUrl}"
                       style="
@@ -849,7 +845,6 @@ router.post(
                     >
                       إعادة تعيين كلمة المرور
                     </a>
-
                   </td>
                 </tr>
               </table>
@@ -872,7 +867,6 @@ router.post(
                 text-align:left;
                 word-break:break-all;
               ">
-
                 <a
                   href="${resetUrl}"
                   style="
@@ -883,7 +877,6 @@ router.post(
                 >
                   ${resetUrl}
                 </a>
-
               </div>
 
               <p style="
@@ -917,7 +910,6 @@ router.post(
                 border-top:1px solid #252525;
               "
             >
-
               <div style="
                 color:#b8945a;
                 font-size:15px;
@@ -942,7 +934,6 @@ router.post(
               ">
                 © Elite Cars. جميع الحقوق محفوظة.
               </div>
-
             </td>
           </tr>
 
@@ -958,7 +949,10 @@ router.post(
       });
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('Password reset email sent for:', user.email);
+        console.log(
+          'Password reset email sent for:',
+          user.email
+        );
       }
     } catch (emailError) {
       user.resetPasswordToken = undefined;
@@ -1330,6 +1324,7 @@ router.put(
  * يسمح للأدمن بحذف أي مستخدم،
  * مع منع الأدمن من حذف حسابه الحالي.
  */
+
 router.delete(
   '/users/:id',
   protect,
