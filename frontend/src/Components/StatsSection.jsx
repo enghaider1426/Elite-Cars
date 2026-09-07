@@ -42,7 +42,10 @@ function StatsSection() {
         <div className="stats-grid">
           {stats.map((stat, index) => (
             <div key={index} className="stat-item">
-              <div className="stat-number">
+              <div
+                className="stat-number"
+                data-no-auto-translate="true"
+              >
                 {isVisible ? (
                   <CounterAnimation
                     target={stat.number}
@@ -51,7 +54,9 @@ function StatsSection() {
                     language={language}
                   />
                 ) : (
-                  <span>0{stat.suffix}</span>
+                  <span data-no-auto-translate="true">
+                    0{stat.suffix}
+                  </span>
                 )}
               </div>
 
@@ -110,7 +115,7 @@ function CounterAnimation({ target, suffix, duration, language }) {
   const locale = language === 'en' ? 'en-US' : 'ar-SA'
 
   return (
-    <span>
+    <span data-no-auto-translate="true">
       {count.toLocaleString(locale)}
       {suffix}
     </span>
