@@ -37,14 +37,15 @@ function StatsSection() {
   return (
     <section className="stats-section" ref={sectionRef}>
       <div className="stats-overlay"></div>
+
       <div className="container">
         <div className="stats-grid">
           {stats.map((stat, index) => (
             <div key={index} className="stat-item">
               <div className="stat-number">
                 {isVisible ? (
-                  <CounterAnimation 
-                    target={stat.number} 
+                  <CounterAnimation
+                    target={stat.number}
                     suffix={stat.suffix}
                     duration={2000}
                     language={language}
@@ -53,7 +54,10 @@ function StatsSection() {
                   <span>0{stat.suffix}</span>
                 )}
               </div>
-              <div className="stat-label">{stat.label}</div>
+
+              <div className="stat-label">
+                {stat.label}
+              </div>
             </div>
           ))}
         </div>
@@ -66,27 +70,49 @@ function CounterAnimation({ target, suffix, duration, language }) {
   const [count, setCount] = useState(0)
 
   useEffect(() => {
-    let startTime
-    let animationFrame
+    let startTime = null
+    let animationFrame = null
+    let cancelled = false
 
     const animate = (timestamp) => {
-      if (!startTime) startTime = timestamp
-      const progress = Math.min((timestamp - startTime) / duration, 1)
-      const easeOutQuart = 1 - Math.pow(1 - progress, 4)
+      if (cancelled) return
+
+      if (!startTime) {
+        startTime = timestamp
+      }
+
+      const progress = Math.min(
+        (timestamp - startTime) / duration,
+        1
+      )
+
+      const easeOutQuart =
+        1 - Math.pow(1 - progress, 4)
+
       setCount(Math.floor(easeOutQuart * target))
 
       if (progress < 1) {
-        animationFrame = requestAnimationFrame(animate)
+        animationFrame = window.requestAnimationFrame(animate)
       }
     }
 
-    animationFrame = requestAnimationFrame(animate)
-    return () => cancelAnimationFrame(animationFrame)
+    animationFrame = window.requestAnimationFrame(animate)
+
+    return () => {
+      cancelled = true
+
+      if (animationFrame) {
+        window.cancelAnimationFrame(animationFrame)
+      }
+    }
   }, [target, duration])
+
+  const locale = language === 'en' ? 'en-US' : 'ar-SA'
 
   return (
     <span>
-      {count.toLocaleString(language === 'en' ? 'en-US' : 'ar-SA')}{suffix}
+      {count.toLocaleString(locale)}
+      {suffix}
     </span>
   )
 }
