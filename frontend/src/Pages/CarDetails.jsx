@@ -24,6 +24,12 @@ function CarDetails({ cars, onDeleteCar, onView }) {
   const [shareMessage, setShareMessage] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
 
+  // =========================================================
+  // ترجمة الوصف الديناميكي عند عدم وجود descriptionEn
+  // =========================================================
+
+  const [translatedDescription, setTranslatedDescription] = useState('')
+
   // حماية من البيانات الناقصة
   const safeCars = Array.isArray(cars) ? cars : []
 
@@ -131,6 +137,153 @@ function CarDetails({ cars, onDeleteCar, onView }) {
       : 'لا يوجد وصف متاح.',
     'لا يوجد وصف متاح.'
   )
+
+  // =========================================================
+  // ترجمة الوصف الديناميكي عبر Backend / OpenAI
+  // =========================================================
+
+  useEffect(() => {
+    let cancelled = false
+
+    const sourceDescription =
+      car?.description !== null &&
+      car?.description !== undefined
+        ? String(car.description).trim()
+        : ''
+
+    const existingEnglishDescription =
+      car?.descriptionEn !== null &&
+      car?.descriptionEn !== undefined
+        ? String(car.descriptionEn).trim()
+        : ''
+
+    // العربية: نعرض الوصف الأصلي كما هو
+    if (!isEnglish) {
+      setTranslatedDescription(sourceDescription)
+      return () => {
+        cancelled = true
+      }
+    }
+
+    // الإنجليزية + يوجد وصف إنجليزي محفوظ
+    if (existingEnglishDescription) {
+      setTranslatedDescription(existingEnglishDescription)
+      return () => {
+        cancelled = true
+      }
+    }
+
+    // لا يوجد وصف
+    if (!sourceDescription) {
+      setTranslatedDescription(
+        'No description available.'
+      )
+      return () => {
+        cancelled = true
+      }
+    }
+
+    // أولاً استخدم الترجمة الموجودة في القاموس إن وجدت
+    const localTranslation =
+      t(sourceDescription)
+
+    if (
+      localTranslation &&
+      localTranslation !== sourceDescription &&
+      !/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
+        localTranslation
+      )
+    ) {
+      setTranslatedDescription(localTranslation)
+      return () => {
+        cancelled = true
+      }
+    }
+
+    // إذا لم توجد ترجمة محلية، استخدم Backend / OpenAI
+    const API_BASE_URL = (
+      import.meta.env.VITE_API_URL ||
+      'http://localhost:5000'
+    )
+      .replace(/\/+$/, '')
+      .replace(/\/api$/, '')
+
+    const translateDescription = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/translation/batch`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              values: [sourceDescription]
+            })
+          }
+        )
+
+        if (!response.ok) {
+          throw new Error(
+            `Description translation failed: ${response.status}`
+          )
+        }
+
+        const data = await response
+          .json()
+          .catch(() => ({}))
+
+        const translated =
+          data?.translations?.[sourceDescription]
+
+        if (
+          !cancelled &&
+          typeof translated === 'string' &&
+          translated.trim() &&
+          !/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
+            translated
+          )
+        ) {
+          setTranslatedDescription(
+            translated.trim()
+          )
+          return
+        }
+
+        if (!cancelled) {
+          setTranslatedDescription(
+            description
+          )
+        }
+      } catch (error) {
+        console.warn(
+          'Dynamic description translation unavailable:',
+          error?.message || error
+        )
+
+        if (!cancelled) {
+          setTranslatedDescription(
+            description
+          )
+        }
+      }
+    }
+
+    void translateDescription()
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    car?._id,
+    car?.id,
+    car?.description,
+    car?.descriptionEn,
+    isEnglish,
+    t,
+    description
+  ])
 
   // =========================================================
   // المميزات
@@ -676,7 +829,12 @@ function CarDetails({ cars, onDeleteCar, onView }) {
                 </h3>
 
                 <p className="description-text">
-                  {description}
+                  {isEnglish
+                    ? (
+                        translatedDescription ||
+                        'Translating...'
+                      )
+                    : description}
                 </p>
 
               </div>
