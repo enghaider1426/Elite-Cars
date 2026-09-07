@@ -1073,6 +1073,7 @@ let uiTranslationRequest = null
 // Prevent repeated requests for the same source
 // when React/MutationObserver updates the DOM.
 const UI_TRANSLATION_RETRY_DELAY = 30000
+
 const UI_TRANSLATION_RETRY_AFTER =
   new Map()
 
@@ -1716,6 +1717,7 @@ export function LanguageProvider({
     )
 
     let frameId = null
+
     let pendingNodes = new Set()
 
     const processChangedTextNode = (
@@ -1736,6 +1738,17 @@ export function LanguageProvider({
         !parent ||
         ['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(
           parent.tagName
+        )
+      ) {
+        return
+      }
+
+      // ADDED: Do not let the automatic
+      // translation observer touch protected
+      // dynamic content such as counters.
+      if (
+        isInsideProtectedElement(
+          textNode
         )
       ) {
         return
