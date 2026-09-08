@@ -3,16 +3,9 @@ const express = require('express');
 const router = express.Router();
 
 const crypto = require('crypto');
-
 const mongoose = require('mongoose');
 
-const nodemailer = require('nodemailer');
-const dns = require('dns');
-
-dns.setDefaultResultOrder('ipv4first');
-
 const User = require('../models/User');
-
 const Car = require('../models/Car');
 
 const { protect, admin } = require('../middleware/auth');
@@ -49,11 +42,21 @@ const AZ_PHONE_REGEX = /^\+?994\d{9}$/;
 
 /*
  * =========================================================
- * Gmail SMTP Email Service
+ * Resend Email API
  * =========================================================
  *
- * يستخدم Gmail SMTP لإرسال رسائل التحقق واستعادة كلمة المرور.
- * لا يحتاج إلى شراء دومين.
+ * يستخدم Resend API عبر HTTPS لإرسال:
+ * - رسالة تأكيد الحساب
+ * - رسالة استعادة كلمة المرور
+ *
+ * متغيرات البيئة المطلوبة في Render:
+ * RESEND_API_KEY
+ * RESEND_FROM
+ *
+ * مثال RESEND_FROM:
+ * Elite Cars <onboarding@resend.dev>
+ *
+ * أو بريد موثّق من دومينك في Resend.
  */
 
 const sendEmail = async ({
@@ -62,55 +65,56 @@ const sendEmail = async ({
   text,
   html,
 }) => {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  if (!process.env.RESEND_API_KEY) {
     throw new Error(
-      'SMTP_USER أو SMTP_PASS غير موجود في متغيرات البيئة'
+      'RESEND_API_KEY غير موجود في متغيرات البيئة'
     );
   }
 
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: Number(process.env.SMTP_PORT) || 587,
-    secure: Number(process.env.SMTP_PORT) === 465,
-
-    // Force IPv4
-    family: 4,
-
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 30000,
-
-    tls: {
-      family: 4,
-      servername: process.env.SMTP_HOST || 'smtp.gmail.com',
-    },
-  });
-
   const from =
-    process.env.SMTP_FROM ||
-    `Elite Cars <${process.env.SMTP_USER}>`;
+    process.env.RESEND_FROM ||
+    'Elite Cars <onboarding@resend.dev>';
 
-  const info = await transporter.sendMail({
-    from,
-    to,
-    subject,
-    text,
-    html,
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from,
+      to: [to],
+      subject,
+      text,
+      html,
+    }),
   });
+
+  let data = null;
+
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    const errorMessage =
+      data?.message ||
+      data?.error?.message ||
+      `Resend API error: ${response.status}`;
+
+    throw new Error(errorMessage);
+  }
 
   if (process.env.NODE_ENV === 'development') {
     console.log(
-      'Email sent successfully:',
-      info.messageId
+      'Email sent successfully through Resend:',
+      data?.id || 'no-message-id'
     );
   }
 
-  return info;
+  return data;
 };
 
 router.post(
@@ -207,13 +211,17 @@ router.post(
     try {
       await sendEmail({
         to: user.email,
-        subject: 'تأكيد البريد الإلكتروني - Elite Cars',
+
+        subject:
+          'تأكيد البريد الإلكتروني - Elite Cars',
+
         text:
           `مرحباً ${user.name || ''}\n\n` +
           `شكراً لتسجيلك في Elite Cars.\n\n` +
           `اضغط على الرابط التالي لتأكيد بريدك الإلكتروني:\n\n` +
           `${verificationUrl}\n\n` +
           `هذا الرابط صالح لفترة محدودة.`,
+
         html: `
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -222,6 +230,7 @@ router.post(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>تأكيد البريد الإلكتروني - Elite Cars</title>
 </head>
+
 <body style="
   margin:0;
   padding:0;
@@ -229,6 +238,7 @@ router.post(
   font-family:Arial,Helvetica,sans-serif;
   color:#f5f5f5;
 ">
+
   <table
     width="100%"
     cellpadding="0"
@@ -238,6 +248,7 @@ router.post(
   >
     <tr>
       <td align="center">
+
         <table
           width="100%"
           cellpadding="0"
@@ -252,6 +263,7 @@ router.post(
             box-shadow:0 15px 45px rgba(0,0,0,0.45);
           "
         >
+
           <!-- Header -->
           <tr>
             <td
@@ -301,6 +313,7 @@ router.post(
               align="center"
               style="padding:42px 35px 35px;"
             >
+
               <div style="
                 width:72px;
                 height:72px;
@@ -420,6 +433,7 @@ router.post(
               ">
                 هذا الرابط صالح لفترة محدودة.
               </p>
+
             </td>
           </tr>
 
@@ -459,10 +473,13 @@ router.post(
               </div>
             </td>
           </tr>
+
         </table>
+
       </td>
     </tr>
   </table>
+
 </body>
 </html>
 `,
@@ -691,6 +708,7 @@ router.post(
     try {
       await sendEmail({
         to: user.email,
+
         subject:
           'إعادة تعيين كلمة المرور - Elite Cars',
 
@@ -710,6 +728,7 @@ router.post(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>إعادة تعيين كلمة المرور - Elite Cars</title>
 </head>
+
 <body style="
   margin:0;
   padding:0;
@@ -717,6 +736,7 @@ router.post(
   font-family:Arial,Helvetica,sans-serif;
   color:#f5f5f5;
 ">
+
   <table
     width="100%"
     cellpadding="0"
@@ -726,6 +746,7 @@ router.post(
   >
     <tr>
       <td align="center">
+
         <table
           width="100%"
           cellpadding="0"
@@ -740,6 +761,7 @@ router.post(
             box-shadow:0 15px 45px rgba(0,0,0,0.45);
           "
         >
+
           <!-- Header -->
           <tr>
             <td
@@ -789,6 +811,7 @@ router.post(
               align="center"
               style="padding:42px 35px 35px;"
             >
+
               <div style="
                 width:72px;
                 height:72px;
@@ -924,6 +947,7 @@ router.post(
               ">
                 إذا لم تطلب إعادة تعيين كلمة المرور، يمكنك تجاهل هذا البريد.
               </p>
+
             </td>
           </tr>
 
@@ -963,10 +987,13 @@ router.post(
               </div>
             </td>
           </tr>
+
         </table>
+
       </td>
     </tr>
   </table>
+
 </body>
 </html>
 `,
