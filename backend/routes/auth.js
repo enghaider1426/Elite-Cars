@@ -1,13 +1,19 @@
 const express = require('express');
+
 const router = express.Router();
+
 const crypto = require('crypto');
+
 const mongoose = require('mongoose');
+
 const nodemailer = require('nodemailer');
 
 const User = require('../models/User');
+
 const Car = require('../models/Car');
 
 const { protect, admin } = require('../middleware/auth');
+
 const {
   asyncHandler,
   ErrorResponse,
@@ -58,23 +64,29 @@ const sendEmail = async ({
       'SMTP_USER أو SMTP_PASS غير موجود في متغيرات البيئة'
     );
   }
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: Number(process.env.SMTP_PORT) || 587,
-  secure: Number(process.env.SMTP_PORT) === 465,
 
-  // Force IPv4 to avoid Render IPv6 connection issues
-  family: 4,
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
 
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
+    // Force IPv4
+    family: 4,
 
-  connectionTimeout: 15000,
-  greetingTimeout: 15000,
-  socketTimeout: 20000,
-});
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 30000,
+
+    tls: {
+      family: 4,
+      servername: 'smtp.gmail.com',
+    },
+  });
 
   const from =
     process.env.SMTP_FROM ||
@@ -194,6 +206,7 @@ router.post(
           `اضغط على الرابط التالي لتأكيد بريدك الإلكتروني:\n\n` +
           `${verificationUrl}\n\n` +
           `هذا الرابط صالح لفترة محدودة.`,
+
         html: `
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -210,6 +223,7 @@ router.post(
   font-family:Arial,Helvetica,sans-serif;
   color:#f5f5f5;
 ">
+
   <table
     width="100%"
     cellpadding="0"
@@ -284,6 +298,7 @@ router.post(
               align="center"
               style="padding:42px 35px 35px;"
             >
+
               <div style="
                 width:72px;
                 height:72px;
@@ -403,6 +418,7 @@ router.post(
               ">
                 هذا الرابط صالح لفترة محدودة.
               </p>
+
             </td>
           </tr>
 
@@ -444,10 +460,10 @@ router.post(
           </tr>
 
         </table>
-
       </td>
     </tr>
   </table>
+
 </body>
 </html>
 `,
@@ -469,6 +485,7 @@ router.post(
     }
 
     const userResponse = user.toObject();
+
     delete userResponse.password;
 
     res.status(201).json({
@@ -539,6 +556,7 @@ router.post(
     setAuthCookie(res, token);
 
     const userResponse = user.toObject();
+
     delete userResponse.password;
 
     res.json({
@@ -696,6 +714,7 @@ router.post(
   font-family:Arial,Helvetica,sans-serif;
   color:#f5f5f5;
 ">
+
   <table
     width="100%"
     cellpadding="0"
@@ -770,6 +789,7 @@ router.post(
               align="center"
               style="padding:42px 35px 35px;"
             >
+
               <div style="
                 width:72px;
                 height:72px;
@@ -905,6 +925,7 @@ router.post(
               ">
                 إذا لم تطلب إعادة تعيين كلمة المرور، يمكنك تجاهل هذا البريد.
               </p>
+
             </td>
           </tr>
 
@@ -946,10 +967,10 @@ router.post(
           </tr>
 
         </table>
-
       </td>
     </tr>
   </table>
+
 </body>
 </html>
 `,
@@ -961,6 +982,7 @@ router.post(
           user.email
         );
       }
+
     } catch (emailError) {
       user.resetPasswordToken = undefined;
       user.resetPasswordExpire = undefined;
