@@ -66,9 +66,9 @@ const sendEmail = async ({
   }
 
   const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: Number(process.env.SMTP_PORT) || 587,
+    secure: Number(process.env.SMTP_PORT) === 465,
 
     // Force IPv4
     family: 4,
@@ -84,7 +84,7 @@ const sendEmail = async ({
 
     tls: {
       family: 4,
-      servername: 'smtp.gmail.com',
+      servername: process.env.SMTP_HOST || 'smtp.gmail.com',
     },
   });
 
@@ -187,9 +187,14 @@ router.post(
       );
     }
 
-    const frontendUrl =
-      process.env.FRONTEND_URL ||
-      'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL;
+
+    if (!frontendUrl) {
+      throw new ErrorResponse(
+        'FRONTEND_URL غير موجود في متغيرات البيئة',
+        500
+      );
+    }
 
     const verificationUrl =
       `${frontendUrl}/verify-email?token=${encodeURIComponent(
@@ -206,7 +211,6 @@ router.post(
           `اضغط على الرابط التالي لتأكيد بريدك الإلكتروني:\n\n` +
           `${verificationUrl}\n\n` +
           `هذا الرابط صالح لفترة محدودة.`,
-
         html: `
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -215,7 +219,6 @@ router.post(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>تأكيد البريد الإلكتروني - Elite Cars</title>
 </head>
-
 <body style="
   margin:0;
   padding:0;
@@ -223,7 +226,6 @@ router.post(
   font-family:Arial,Helvetica,sans-serif;
   color:#f5f5f5;
 ">
-
   <table
     width="100%"
     cellpadding="0"
@@ -233,7 +235,6 @@ router.post(
   >
     <tr>
       <td align="center">
-
         <table
           width="100%"
           cellpadding="0"
@@ -248,7 +249,6 @@ router.post(
             box-shadow:0 15px 45px rgba(0,0,0,0.45);
           "
         >
-
           <!-- Header -->
           <tr>
             <td
@@ -298,7 +298,6 @@ router.post(
               align="center"
               style="padding:42px 35px 35px;"
             >
-
               <div style="
                 width:72px;
                 height:72px;
@@ -418,7 +417,6 @@ router.post(
               ">
                 هذا الرابط صالح لفترة محدودة.
               </p>
-
             </td>
           </tr>
 
@@ -458,12 +456,10 @@ router.post(
               </div>
             </td>
           </tr>
-
         </table>
       </td>
     </tr>
   </table>
-
 </body>
 </html>
 `,
@@ -674,9 +670,14 @@ router.post(
       validateBeforeSave: false,
     });
 
-    const frontendUrl =
-      process.env.FRONTEND_URL ||
-      'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL;
+
+    if (!frontendUrl) {
+      throw new ErrorResponse(
+        'FRONTEND_URL غير موجود في متغيرات البيئة',
+        500
+      );
+    }
 
     // BrowserRouter: لا نستخدم /#/
     const resetUrl =
@@ -706,7 +707,6 @@ router.post(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>إعادة تعيين كلمة المرور - Elite Cars</title>
 </head>
-
 <body style="
   margin:0;
   padding:0;
@@ -714,7 +714,6 @@ router.post(
   font-family:Arial,Helvetica,sans-serif;
   color:#f5f5f5;
 ">
-
   <table
     width="100%"
     cellpadding="0"
@@ -724,7 +723,6 @@ router.post(
   >
     <tr>
       <td align="center">
-
         <table
           width="100%"
           cellpadding="0"
@@ -739,7 +737,6 @@ router.post(
             box-shadow:0 15px 45px rgba(0,0,0,0.45);
           "
         >
-
           <!-- Header -->
           <tr>
             <td
@@ -789,7 +786,6 @@ router.post(
               align="center"
               style="padding:42px 35px 35px;"
             >
-
               <div style="
                 width:72px;
                 height:72px;
@@ -925,7 +921,6 @@ router.post(
               ">
                 إذا لم تطلب إعادة تعيين كلمة المرور، يمكنك تجاهل هذا البريد.
               </p>
-
             </td>
           </tr>
 
@@ -965,12 +960,10 @@ router.post(
               </div>
             </td>
           </tr>
-
         </table>
       </td>
     </tr>
   </table>
-
 </body>
 </html>
 `,
@@ -982,7 +975,6 @@ router.post(
           user.email
         );
       }
-
     } catch (emailError) {
       user.resetPasswordToken = undefined;
       user.resetPasswordExpire = undefined;
