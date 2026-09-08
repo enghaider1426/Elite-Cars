@@ -58,19 +58,23 @@ const sendEmail = async ({
       'SMTP_USER أو SMTP_PASS غير موجود في متغيرات البيئة'
     );
   }
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: Number(process.env.SMTP_PORT) || 587,
+  secure: Number(process.env.SMTP_PORT) === 465,
 
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: Number(process.env.SMTP_PORT) || 465,
-    secure: Number(process.env.SMTP_PORT) === 465,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-    connectionTimeout: 15000,
-    greetingTimeout: 15000,
-    socketTimeout: 20000,
-  });
+  // Force IPv4 to avoid Render IPv6 connection issues
+  family: 4,
+
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+
+  connectionTimeout: 15000,
+  greetingTimeout: 15000,
+  socketTimeout: 20000,
+});
 
   const from =
     process.env.SMTP_FROM ||
