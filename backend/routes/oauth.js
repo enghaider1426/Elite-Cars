@@ -11,7 +11,10 @@ const { asyncHandler, ErrorResponse } = require('../middleware/errorHandler');
 const cookieOptions = () => ({
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax',
+  sameSite:
+    process.env.NODE_ENV === 'production'
+      ? 'none'
+      : 'lax',
   maxAge: 10 * 60 * 1000,
   path: '/',
 });
@@ -302,7 +305,11 @@ router.get(
         secure:
           process.env.NODE_ENV ===
           'production',
-        sameSite: 'lax',
+        sameSite:
+          process.env.NODE_ENV ===
+          'production'
+            ? 'none'
+            : 'lax',
         path: '/',
       }
     );
