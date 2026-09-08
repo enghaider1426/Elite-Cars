@@ -3,9 +3,11 @@ const express = require('express');
 const router = express.Router();
 
 const crypto = require('crypto');
+
 const mongoose = require('mongoose');
 
 const User = require('../models/User');
+
 const Car = require('../models/Car');
 
 const { protect, admin } = require('../middleware/auth');
@@ -46,7 +48,6 @@ const AZ_PHONE_REGEX = /^\+?994\d{9}$/;
  * =========================================================
  *
  * يستخدم Resend API عبر HTTPS لإرسال:
- * - رسالة تأكيد الحساب
  * - رسالة استعادة كلمة المرور
  *
  * متغيرات البيئة المطلوبة في Render:
@@ -75,20 +76,23 @@ const sendEmail = async ({
     process.env.RESEND_FROM ||
     'Elite Cars <onboarding@resend.dev>';
 
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from,
-      to: [to],
-      subject,
-      text,
-      html,
-    }),
-  });
+  const response = await fetch(
+    'https://api.resend.com/emails',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from,
+        to: [to],
+        subject,
+        text,
+        html,
+      }),
+    }
+  );
 
   let data = null;
 
@@ -110,6 +114,85 @@ const sendEmail = async ({
   if (process.env.NODE_ENV === 'development') {
     console.log(
       'Email sent successfully through Resend:',
+      data?.id || 'no-message-id'
+    );
+  }
+
+  return data;
+};
+
+/*
+ * =========================================================
+ * Sendlib Email API
+ * =========================================================
+ *
+ * يستخدم Sendlib لإرسال رسالة تأكيد الحساب
+ * عبر حساب Gmail المرتبط في Sendlib.
+ *
+ * متغيرات البيئة المطلوبة في Render:
+ * SENDLIB_API_KEY
+ * SENDLIB_FROM
+ */
+
+const sendVerificationEmail = async ({
+  to,
+  subject,
+  text,
+  html,
+}) => {
+  if (!process.env.SENDLIB_API_KEY) {
+    throw new Error(
+      'SENDLIB_API_KEY غير موجود في متغيرات البيئة'
+    );
+  }
+
+  const from =
+    process.env.SENDLIB_FROM;
+
+  if (!from) {
+    throw new Error(
+      'SENDLIB_FROM غير موجود في متغيرات البيئة'
+    );
+  }
+
+  const response = await fetch(
+    'https://sendlib.samueltuoyo.com/api/send',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.SENDLIB_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from,
+        to,
+        subject,
+        text,
+        html,
+      }),
+    }
+  );
+
+  let data = null;
+
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    const errorMessage =
+      data?.message ||
+      data?.error ||
+      `Sendlib API error: ${response.status}`;
+
+    throw new Error(errorMessage);
+  }
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log(
+      'Email verification sent successfully through Sendlib:',
       data?.id || 'no-message-id'
     );
   }
@@ -209,7 +292,12 @@ router.post(
       )}`;
 
     try {
-      await sendEmail({
+      /*
+       * =====================================================
+       * Sendlib فقط لتأكيد إنشاء الحساب
+       * =====================================================
+       */
+      await sendVerificationEmail({
         to: user.email,
 
         subject:
@@ -265,6 +353,7 @@ router.post(
         >
 
           <!-- Header -->
+
           <tr>
             <td
               align="center"
@@ -274,6 +363,7 @@ router.post(
                 border-bottom:1px solid #2c2c2c;
               "
             >
+
               <div style="
                 font-size:30px;
                 font-weight:700;
@@ -292,10 +382,12 @@ router.post(
               ">
                 PREMIUM AUTOMOTIVE EXPERIENCE
               </div>
+
             </td>
           </tr>
 
           <!-- Gold line -->
+
           <tr>
             <td style="
               height:3px;
@@ -308,6 +400,7 @@ router.post(
           </tr>
 
           <!-- Content -->
+
           <tr>
             <td
               align="center"
@@ -362,6 +455,7 @@ router.post(
               </p>
 
               <!-- Button -->
+
               <table
                 cellpadding="0"
                 cellspacing="0"
@@ -376,6 +470,7 @@ router.post(
                       background:#b8945a;
                     "
                   >
+
                     <a
                       href="${verificationUrl}"
                       style="
@@ -391,6 +486,7 @@ router.post(
                     >
                       تأكيد البريد الإلكتروني
                     </a>
+
                   </td>
                 </tr>
               </table>
@@ -413,6 +509,7 @@ router.post(
                 text-align:left;
                 word-break:break-all;
               ">
+
                 <a
                   href="${verificationUrl}"
                   style="
@@ -423,6 +520,7 @@ router.post(
                 >
                   ${verificationUrl}
                 </a>
+
               </div>
 
               <p style="
@@ -438,6 +536,7 @@ router.post(
           </tr>
 
           <!-- Footer -->
+
           <tr>
             <td
               align="center"
@@ -447,6 +546,7 @@ router.post(
                 border-top:1px solid #252525;
               "
             >
+
               <div style="
                 color:#b8945a;
                 font-size:15px;
@@ -471,6 +571,7 @@ router.post(
               ">
                 © Elite Cars. جميع الحقوق محفوظة.
               </div>
+
             </td>
           </tr>
 
@@ -706,6 +807,11 @@ router.post(
       )}`;
 
     try {
+      /*
+       * =====================================================
+       * Forgot Password يبقى على Resend كما هو
+       * =====================================================
+       */
       await sendEmail({
         to: user.email,
 
@@ -763,6 +869,7 @@ router.post(
         >
 
           <!-- Header -->
+
           <tr>
             <td
               align="center"
@@ -772,6 +879,7 @@ router.post(
                 border-bottom:1px solid #2c2c2c;
               "
             >
+
               <div style="
                 font-size:30px;
                 font-weight:700;
@@ -790,10 +898,12 @@ router.post(
               ">
                 PREMIUM AUTOMOTIVE EXPERIENCE
               </div>
+
             </td>
           </tr>
 
           <!-- Gold line -->
+
           <tr>
             <td style="
               height:3px;
@@ -806,6 +916,7 @@ router.post(
           </tr>
 
           <!-- Content -->
+
           <tr>
             <td
               align="center"
@@ -867,6 +978,7 @@ router.post(
               </p>
 
               <!-- Button -->
+
               <table
                 cellpadding="0"
                 cellspacing="0"
@@ -881,6 +993,7 @@ router.post(
                       background:#b8945a;
                     "
                   >
+
                     <a
                       href="${resetUrl}"
                       style="
@@ -896,6 +1009,7 @@ router.post(
                     >
                       إعادة تعيين كلمة المرور
                     </a>
+
                   </td>
                 </tr>
               </table>
@@ -918,6 +1032,7 @@ router.post(
                 text-align:left;
                 word-break:break-all;
               ">
+
                 <a
                   href="${resetUrl}"
                   style="
@@ -928,6 +1043,7 @@ router.post(
                 >
                   ${resetUrl}
                 </a>
+
               </div>
 
               <p style="
@@ -952,6 +1068,7 @@ router.post(
           </tr>
 
           <!-- Footer -->
+
           <tr>
             <td
               align="center"
@@ -961,6 +1078,7 @@ router.post(
                 border-top:1px solid #252525;
               "
             >
+
               <div style="
                 color:#b8945a;
                 font-size:15px;
@@ -985,6 +1103,7 @@ router.post(
               ">
                 © Elite Cars. جميع الحقوق محفوظة.
               </div>
+
             </td>
           </tr>
 
@@ -1005,6 +1124,7 @@ router.post(
           user.email
         );
       }
+
     } catch (emailError) {
       user.resetPasswordToken = undefined;
       user.resetPasswordExpire = undefined;
