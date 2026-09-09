@@ -146,8 +146,7 @@ const sendVerificationEmail = async ({
     );
   }
 
-  const from =
-    process.env.SENDLIB_FROM;
+  const from = process.env.SENDLIB_FROM;
 
   if (!from) {
     throw new Error(
@@ -297,9 +296,9 @@ router.post(
        * Sendlib فقط لتأكيد إنشاء الحساب
        * =====================================================
        */
+
       await sendVerificationEmail({
         to: user.email,
-
         subject:
           'تأكيد البريد الإلكتروني - Elite Cars',
 
@@ -318,7 +317,6 @@ router.post(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>تأكيد البريد الإلكتروني - Elite Cars</title>
 </head>
-
 <body style="
   margin:0;
   padding:0;
@@ -326,7 +324,6 @@ router.post(
   font-family:Arial,Helvetica,sans-serif;
   color:#f5f5f5;
 ">
-
   <table
     width="100%"
     cellpadding="0"
@@ -336,7 +333,6 @@ router.post(
   >
     <tr>
       <td align="center">
-
         <table
           width="100%"
           cellpadding="0"
@@ -351,9 +347,7 @@ router.post(
             box-shadow:0 15px 45px rgba(0,0,0,0.45);
           "
         >
-
           <!-- Header -->
-
           <tr>
             <td
               align="center"
@@ -363,7 +357,6 @@ router.post(
                 border-bottom:1px solid #2c2c2c;
               "
             >
-
               <div style="
                 font-size:30px;
                 font-weight:700;
@@ -382,12 +375,10 @@ router.post(
               ">
                 PREMIUM AUTOMOTIVE EXPERIENCE
               </div>
-
             </td>
           </tr>
 
           <!-- Gold line -->
-
           <tr>
             <td style="
               height:3px;
@@ -400,13 +391,11 @@ router.post(
           </tr>
 
           <!-- Content -->
-
           <tr>
             <td
               align="center"
               style="padding:42px 35px 35px;"
             >
-
               <div style="
                 width:72px;
                 height:72px;
@@ -455,7 +444,6 @@ router.post(
               </p>
 
               <!-- Button -->
-
               <table
                 cellpadding="0"
                 cellspacing="0"
@@ -470,7 +458,6 @@ router.post(
                       background:#b8945a;
                     "
                   >
-
                     <a
                       href="${verificationUrl}"
                       style="
@@ -486,7 +473,6 @@ router.post(
                     >
                       تأكيد البريد الإلكتروني
                     </a>
-
                   </td>
                 </tr>
               </table>
@@ -509,7 +495,6 @@ router.post(
                 text-align:left;
                 word-break:break-all;
               ">
-
                 <a
                   href="${verificationUrl}"
                   style="
@@ -520,7 +505,6 @@ router.post(
                 >
                   ${verificationUrl}
                 </a>
-
               </div>
 
               <p style="
@@ -531,12 +515,10 @@ router.post(
               ">
                 هذا الرابط صالح لفترة محدودة.
               </p>
-
             </td>
           </tr>
 
           <!-- Footer -->
-
           <tr>
             <td
               align="center"
@@ -546,7 +528,6 @@ router.post(
                 border-top:1px solid #252525;
               "
             >
-
               <div style="
                 color:#b8945a;
                 font-size:15px;
@@ -571,16 +552,13 @@ router.post(
               ">
                 © Elite Cars. جميع الحقوق محفوظة.
               </div>
-
             </td>
           </tr>
 
         </table>
-
       </td>
     </tr>
   </table>
-
 </body>
 </html>
 `,
@@ -809,12 +787,12 @@ router.post(
     try {
       /*
        * =====================================================
-       * Forgot Password يبقى على Resend كما هو
+       * Forgot Password يستخدم Sendlib
        * =====================================================
        */
-      await sendEmail({
-        to: user.email,
 
+      await sendVerificationEmail({
+        to: user.email,
         subject:
           'إعادة تعيين كلمة المرور - Elite Cars',
 
@@ -869,7 +847,6 @@ router.post(
         >
 
           <!-- Header -->
-
           <tr>
             <td
               align="center"
@@ -879,7 +856,6 @@ router.post(
                 border-bottom:1px solid #2c2c2c;
               "
             >
-
               <div style="
                 font-size:30px;
                 font-weight:700;
@@ -898,12 +874,10 @@ router.post(
               ">
                 PREMIUM AUTOMOTIVE EXPERIENCE
               </div>
-
             </td>
           </tr>
 
           <!-- Gold line -->
-
           <tr>
             <td style="
               height:3px;
@@ -916,7 +890,6 @@ router.post(
           </tr>
 
           <!-- Content -->
-
           <tr>
             <td
               align="center"
@@ -978,7 +951,6 @@ router.post(
               </p>
 
               <!-- Button -->
-
               <table
                 cellpadding="0"
                 cellspacing="0"
@@ -993,7 +965,6 @@ router.post(
                       background:#b8945a;
                     "
                   >
-
                     <a
                       href="${resetUrl}"
                       style="
@@ -1009,7 +980,6 @@ router.post(
                     >
                       إعادة تعيين كلمة المرور
                     </a>
-
                   </td>
                 </tr>
               </table>
@@ -1032,7 +1002,6 @@ router.post(
                 text-align:left;
                 word-break:break-all;
               ">
-
                 <a
                   href="${resetUrl}"
                   style="
@@ -1043,7 +1012,6 @@ router.post(
                 >
                   ${resetUrl}
                 </a>
-
               </div>
 
               <p style="
@@ -1068,7 +1036,6 @@ router.post(
           </tr>
 
           <!-- Footer -->
-
           <tr>
             <td
               align="center"
@@ -1126,6 +1093,7 @@ router.post(
       }
 
     } catch (emailError) {
+
       user.resetPasswordToken = undefined;
       user.resetPasswordExpire = undefined;
 
